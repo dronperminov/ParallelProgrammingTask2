@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Grid drawer</title>
+    <meta name="viewport" content="width=device-width" />
+    <style>
+        .num-input { width: 40px; }
+        .num-input-2 { width: 64px; }
+        label { margin-right: 10px; }
+        ul { padding-left: 16px; margin-top: 0 }
+        .visualizer { display: table; }
+        .visualizer-controls { display: table-cell; width: 50%; }
+        .visualizer-results { display: table-cell; }
+        .scrollable { overflow-x: auto; }
+
+        @media (max-width:767px) {
+            .visualizer { display: block; }
+            .visualizer-controls { display: block; width: 100%; }
+            .visualizer-results { display: block; }
+        }
+    </style>
+</head>
+<body>
+    <div class="visualizer">
+        <div class="visualizer-controls">
+            <div>
+                <label>N<sub>x</sub>: <input class="num-input" id="nx-box" type="number" min="0" value="4"></label>
+                <label>N<sub>y</sub>: <input class="num-input" id="ny-box" type="number" min="0" value="4"></label>
+                <label>K<sub>1</sub>: <input class="num-input" id="k1-box" type="number" min="0" value="3"></label>
+                <label>K<sub>2</sub>: <input class="num-input" id="k2-box" type="number" min="0" value="4"></label>
+                <label>P<sub>x</sub>: <input class="num-input" id="px-box" type="number" min="0" value="2"></label>
+                <label>P<sub>y</sub>: <input class="num-input" id="py-box" type="number" min="0" value="2"></label>
+                <label>eps</sub>: <input class="num-input-2" id="eps-box" type="number" min="0" value="0.0001" step="0.0001"></label>
+                <label>Вариант: <select id="variant-box">
+                    <option value="B1">B1</option>
+                    <option value="B2" selected>B2</option>
+                </select></label>
+                <input type="submit" onclick="Draw()" value="Нарисовать">
+            </div>
+            <div style="display: none">
+                <label><input type="checkbox" id="edge-list-box">Список смежности</label>
+                <label><input type="checkbox" id="portrait-box">Портрет матрицы</label>
+                <label><input type="checkbox" id="matrix-box">Матрица коэффициентов</label>
+                <label><input type="checkbox" id="solve-box">Решение</label>
+            </div>
+            <div class="scrollable">
+                <canvas id="canvas"></canvas>
+            </div>
+        </div>
+
+        <div class="visualizer-results" id="result"></div>
+    </div>
+
+    <script src="grid.js"></script>
+    <script src="solver.js"></script>
+    <script>
+        function Draw() {
+            let nx = +document.getElementById("nx-box").value
+            let ny = +document.getElementById("ny-box").value
+            let k1 = +document.getElementById("k1-box").value
+            let k2 = +document.getElementById("k2-box").value
+            let px = +document.getElementById("px-box").value
+            let py = +document.getElementById("py-box").value
+            let eps = +document.getElementById("eps-box").value
+            let variant = document.getElementById("variant-box").value
+            let result = document.getElementById("result")
+            
+            let canvas = document.getElementById("canvas")
+            let grid = new Grid(canvas, nx, ny, k1, k2, px, py, eps, variant, result)
+
+            grid.Draw()
+        }
+
+        Draw()
+    </script>
+</body>
+</html>
