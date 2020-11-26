@@ -1,6 +1,7 @@
 #include "GraphFiller.h"
 
-GraphFiller::GraphFiller(int ownVertices, int *ia, int *ja, int *l2g, bool debug) {
+GraphFiller::GraphFiller(int totalVertices, int ownVertices, int *ia, int *ja, int *l2g, bool debug) {
+    this->totalVertices = totalVertices;
     this->ownVertices = ownVertices;
     this->ia = ia;
     this->ja = ja;
@@ -28,7 +29,7 @@ void GraphFiller::PrintDebug(double *a, double *b) const {
 // заполнение
 void GraphFiller::Fill(double *&a, double *&b) const {
     a = new double[ia[ownVertices]];
-    b = new double[ownVertices];
+    b = new double[totalVertices];
 
     for (int i = 0; i < ownVertices; i++) {
         double sum = 0;
@@ -39,7 +40,7 @@ void GraphFiller::Fill(double *&a, double *&b) const {
 
             if (i != j) {
                 a[index] = Fa(l2g[i], l2g[j]); // a_ij
-                sum += fabs(a[index]); // наразиваем сумму внедиагональных элементов
+                sum += fabs(a[index]); // наращиваем сумму внедиагональных элементов
             }
             else {
                 diagIndex = index;
@@ -47,8 +48,10 @@ void GraphFiller::Fill(double *&a, double *&b) const {
         }
 
         a[diagIndex] = DIAGONAL_DOMINANCE_COEFFICIENT * sum;
-        b[i] = Fb(l2g[i]);
     }
+
+    for (int i = 0; i < totalVertices; i++)
+        b[i] = Fb(l2g[i]);
 
     if (debug) {
         PrintDebug(a, b);

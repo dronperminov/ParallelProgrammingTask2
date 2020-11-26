@@ -18,7 +18,8 @@ inline double Fb(int i) {
 }
 
 class GraphFiller {
-    int ownVertices; // количество вершин
+    int ownVertices; // количество своих вершин
+    int totalVertices; // общее количество вершин
     int *ia;
     int *ja;
     int *l2g;
@@ -26,7 +27,7 @@ class GraphFiller {
 
     void PrintDebug(double *a, double *b) const; // вывод отладочных значений
 public:
-    GraphFiller(int ownVertices, int *ia, int *ja, int *l2g, bool debug);
+    GraphFiller(int totalVertices, int ownVertices, int *ia, int *ja, int *l2g, bool debug);
 
     void Fill(double *&a, double *&b) const; // заполнение
 };
