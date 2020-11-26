@@ -1,6 +1,6 @@
 COMPILER=mpicxx
 FLAGS=-O3 -pedantic -Wall -std=c++11
-FILES=ArgumentParser.cpp GraphGenerator.cpp
+FILES=ArgumentParser.cpp GraphGenerator.cpp GraphFiller.cpp
 
 all: main execute
 

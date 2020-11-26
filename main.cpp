@@ -5,6 +5,7 @@
 
 #include "ArgumentParser.h"
 #include "GraphGenerator.h"
+#include "GraphFiller.h"
 
 using namespace std;
 
@@ -85,15 +86,22 @@ void Solve(const ArgumentParser& parser, int pid) {
     int *ja = NULL;
     int *l2g = NULL;
     int *part = NULL;
+    double *a = NULL;
+    double *b = NULL;
 
     GraphGenerator generator(nx, ny, k1, k2, px, py, debug == FULL_DEBUG);
     generator.Generate(pid, totalVertices, ownVertices, ia, ja, l2g, part); // запускаем генерацию
+
+    GraphFiller filler(ownVertices, ia, ja, l2g, debug == FULL_DEBUG);
+    filler.Fill(a, b);
 
     // освобождаем выделенную память
     delete[] ia;
     delete[] ja;
     delete[] l2g;
     delete[] part;
+    delete[] a;
+    delete[] b;
 }
 
 int main(int argc, char **argv) {
