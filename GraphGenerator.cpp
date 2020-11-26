@@ -59,39 +59,9 @@ int GraphGenerator::Process2StartColumn(int idx) const {
     return idx * (nx / px) + std::min(idx, nx % px);
 }
 
-// вычисление количества вершин
-int GraphGenerator::GetVerticesCount() const {
-    int totalCells = nx * ny; // общее количество ячеек без деления
-    int intPart = totalCells / (k1 + k2); // полноценно разбиваемая часть ячеек
-    int modPart = totalCells % (k1 + k2); // сколько ячеек останется после целого разбиения
-
-    int n = intPart * (k1 + 2 * k2); // как минимум вот столько вершин
-    int rectangles = intPart * k1; // количество прямоугольников
-    int triangles = intPart * 2 * k2; // количество треугольников
-
-    // если ещё остались клетки
-    if (modPart > 0) {
-        int n1 = modPart > k1 ? k1 : modPart; // количество клеток без разбиения
-        int n2 = modPart - n1; // количество клеток с разбиением
-
-        n += n1 + n2 * 2; // добавляем оставшиеся клетки
-        rectangles += n1;
-        triangles += n2 * 2;
-    }
-
-    if (debug) {
-        fout << std::endl;
-        fout << "Rectangles count: " << rectangles << std::endl;
-        fout << "Triangles count: " << triangles << std::endl;
-        fout << "Vertices count: " << n << std::endl;
-    }
-
-    return n;
-}
-
 // формирование рёбер
-LinkInfo* GraphGenerator::MakeEdges(int ownVertices, int *l2g) const {
-    LinkInfo *edges = new LinkInfo[ownVertices];
+std::vector<LinkInfo> GraphGenerator::MakeEdges(int ownVertices, const std::vector<int> &l2g) const {
+    std::vector<LinkInfo> edges(ownVertices);
 
     for (int i = 0; i < ownVertices; i++) {
         int v = l2g[i];
@@ -130,8 +100,8 @@ LinkInfo* GraphGenerator::MakeEdges(int ownVertices, int *l2g) const {
 }
 
 // формирование массива IA
-int* GraphGenerator::MakeIA(LinkInfo *edges, int ownVertices) const {
-    int *ia = new int[ownVertices + 1];
+std::vector<int> GraphGenerator::MakeIA(const std::vector<LinkInfo> &edges, int ownVertices) const {
+    std::vector<int> ia(ownVertices + 1);
     ia[0] = 0;
 
     for (int i = 0; i < ownVertices; i++)
@@ -140,8 +110,19 @@ int* GraphGenerator::MakeIA(LinkInfo *edges, int ownVertices) const {
     return ia;
 }
 
+// формирование массива JA
+std::vector<int> GraphGenerator::MakeJA(const std::vector<LinkInfo> &edges, const std::vector<int> ia, int ownVertices, std::unordered_map<int, int> &global2local) const {
+    std::vector<int> ja = std::vector<int>(ia[ownVertices]);
+
+    for (int i = 0; i < ownVertices; i++)
+        for (int j = 0; j < edges[i].count; j++)
+            ja[ia[i] + j] = global2local[edges[i].vertices[j]];
+
+    return ja;
+}
+
 // вывод рёбер
-void GraphGenerator::PrintEdges(LinkInfo *edges, int ownVertices) const {
+void GraphGenerator::PrintEdges(const std::vector<LinkInfo> &edges, int ownVertices) const {
     fout << "Edges list: " << std::endl;
 
     for (int i = 0; i < ownVertices; i++) {
@@ -155,10 +136,10 @@ void GraphGenerator::PrintEdges(LinkInfo *edges, int ownVertices) const {
 }
 
 // вывод массива
-void GraphGenerator::PrintArray(int *array, int n, const char *message) const {
+void GraphGenerator::PrintArray(const std::vector<int> array, const char *message) const {
     fout << message << ": [ ";
 
-    for (int i = 0; i < n; i++)
+    for (size_t i = 0; i < array.size(); i++)
         fout << array[i] << " ";
 
     fout << "]" << std::endl;
@@ -217,7 +198,7 @@ int GraphGenerator::GetHaloVerices(int i_start, int i_end, int j_start, int j_en
 }
 
 // формирование собственных вершин
-void GraphGenerator::GenerateOwnVertices(int id, int i_start, int i_end, int j_start, int j_end, int &local, int *l2g, int *part) {
+void GraphGenerator::GenerateOwnVertices(int id, int i_start, int i_end, int j_start, int j_end, int &local, std::vector<int> &l2g, std::vector<int> &part) {
     for (int i = i_start; i < i_end; i++) {
         for (int j = j_start; j < j_end; j++) {
             int vertex = Index2Vertex(i * nx + j);
@@ -234,7 +215,7 @@ void GraphGenerator::GenerateOwnVertices(int id, int i_start, int i_end, int j_s
 }
 
 // формирование HALO вершин
-void GraphGenerator::GenerateHaloVertices(int id, int i_start, int i_end, int j_start, int j_end, int &local, int *l2g, int *part) {
+void GraphGenerator::GenerateHaloVertices(int id, int i_start, int i_end, int j_start, int j_end, int &local, std::vector<int> &l2g, std::vector<int> &part) {
     if (i_start > 0) {
         for (int j = j_start; j < j_end; j++) {
             l2g[local] = Index2Vertex((i_start - 1) * nx + j);
@@ -272,7 +253,7 @@ void GraphGenerator::GenerateHaloVertices(int id, int i_start, int i_end, int j_
     }
 }
 
-int GraphGenerator::Generate(int id, int &totalVertices, int &ownVertices, int *&ia, int *&ja, int *&l2g, int *&part) {
+Graph GraphGenerator::Generate(int id) {
     int idx = id % px;
     int idy = id / px;
 
@@ -284,53 +265,51 @@ int GraphGenerator::Generate(int id, int &totalVertices, int &ownVertices, int *
     int j_start = Process2StartColumn(idx);
     int j_end = Process2StartColumn(idx + 1);
 
-    ownVertices = GetOwnVerticesCount(i_start, i_end, j_start, j_end); // количество собственных вершин в области
-    int haloVertices = GetHaloVerices(i_start, i_end, j_start, j_end); // количество HALO вершин в области
-    totalVertices = ownVertices + haloVertices;
+    Graph graph; // создаём граф
+
+    graph.ownVertices = GetOwnVerticesCount(i_start, i_end, j_start, j_end); // количество собственных вершин в области
+    graph.haloVertices = GetHaloVerices(i_start, i_end, j_start, j_end); // количество HALO вершин в области
+    graph.totalVertices = graph.ownVertices + graph.haloVertices; // считаем общее количество вершин
 
     if (debug) {
         fout << "P" << id << ": " << std::endl;
         fout << "rows: [" << i_start << ", " << i_end << ")" << std::endl;
         fout << "columns: [" << j_start << ", " << j_end << "), " << std::endl;
-        fout << "OWN vertices (No): " << ownVertices << std::endl;
-        fout << "HALO vertices: " << haloVertices << std::endl;
-        fout << "TOTAL vertices (N): " << totalVertices << std::endl;
+        fout << "OWN vertices (No): " << graph.ownVertices << std::endl;
+        fout << "HALO vertices: " << graph.haloVertices << std::endl;
+        fout << "TOTAL vertices (N): " << graph.totalVertices << std::endl;
     }
 
-    l2g = new int[totalVertices];
-    part = new int[totalVertices];
+    graph.l2g = std::vector<int>(graph.totalVertices);
+    graph.part = std::vector<int>(graph.totalVertices);
 
     int local = 0;
-    GenerateOwnVertices(id, i_start, i_end, j_start, j_end, local, l2g, part);
-    GenerateHaloVertices(id, i_start, i_end, j_start, j_end, local, l2g, part);
+    GenerateOwnVertices(id, i_start, i_end, j_start, j_end, local, graph.l2g, graph.part);
+    GenerateHaloVertices(id, i_start, i_end, j_start, j_end, local, graph.l2g, graph.part);
 
     std::unordered_map<int, int> global2local;
 
-    for (int i = 0; i < totalVertices; i++)
-        global2local[l2g[i]] = i;
+    for (int i = 0; i < graph.totalVertices; i++)
+        global2local[graph.l2g[i]] = i;
 
-    LinkInfo *edges = MakeEdges(ownVertices, l2g);
-    ia = MakeIA(edges, ownVertices);
-    ja = new int[ia[ownVertices]];
-
-    for (int i = 0; i < ownVertices; i++)
-        for (int j = 0; j < edges[i].count; j++)
-            ja[ia[i] + j] = global2local[edges[i].vertices[j]];
+    std::vector<LinkInfo> edges = MakeEdges(graph.ownVertices, graph.l2g);
+    graph.ia = MakeIA(edges, graph.ownVertices);
+    graph.ja = MakeJA(edges, graph.ia, graph.ownVertices, global2local);
 
     if (debug) {
-        int *jag = new int[ia[ownVertices]];
+        std::vector<int> jag(graph.ia[graph.ownVertices]);
 
-        for (int i = 0; i < ia[ownVertices]; i++)
-            jag[i] = l2g[ja[i]];
+        for (int i = 0; i < graph.ia[graph.ownVertices]; i++)
+            jag[i] = graph.l2g[graph.ja[i]];
 
-        PrintArray(l2g, totalVertices, "L2G");
-        PrintArray(part, totalVertices, "Part");
-        PrintArray(ia, ownVertices + 1, "IA");
-        PrintArray(ja, ia[ownVertices], "JA");
-        PrintArray(jag, ia[ownVertices], "JA (GLOBAL)");
-        PrintEdges(edges, ownVertices);
+        PrintArray(graph.l2g, "L2G");
+        PrintArray(graph.part, "Part");
+        PrintArray(graph.ia, "IA");
+        PrintArray(graph.ja, "JA");
+        PrintArray(jag, "JA (GLOBAL)");
+        PrintEdges(edges, graph.ownVertices);
         fout << std::endl;
     }
 
-    return 0; // возвращаем время
+    return graph; // возвращаем граф
 }

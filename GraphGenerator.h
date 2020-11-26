@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iomanip>
 #include <unordered_map>
+#include <vector>
 #include <omp.h>
 #include "Types.h"
 
@@ -32,20 +33,20 @@ class GraphGenerator {
     int Process2StartRow(int idy) const; // номер процесса в строку начала области
     int Process2StartColumn(int idx) const; // номер процесса в столбце начала области
 
-    int GetVerticesCount() const; // вычисление количества вершин
     int GetOwnVerticesCount(int i_start, int i_end, int j_start, int j_end) const; // количество собственных вершин в области
     int GetHaloVerices(int i_start, int i_end, int j_start, int j_end) const; // количество HALO вершин в области
 
-    void GenerateOwnVertices(int id, int i_start, int i_end, int j_start, int j_end, int &local, int *l2g, int *part); // формирование собственных вершин
-    void GenerateHaloVertices(int id, int i_start, int i_end, int j_start, int j_end, int &local, int *l2g, int *part); // формирование HALO вершин
+    void GenerateOwnVertices(int id, int i_start, int i_end, int j_start, int j_end, int &local, std::vector<int> &l2g, std::vector<int> &part); // формирование собственных вершин
+    void GenerateHaloVertices(int id, int i_start, int i_end, int j_start, int j_end, int &local, std::vector<int> &l2g, std::vector<int> &part); // формирование HALO вершин
 
-    LinkInfo* MakeEdges(int ownVertices, int *l2g) const; // формирование рёбер для вершины v
-    int* MakeIA(LinkInfo *edges, int ownVertices) const; // формирование массива IA
+    std::vector<LinkInfo> MakeEdges(int ownVertices, const std::vector<int> &l2g) const; // формирование рёбер для вершины v
+    std::vector<int> MakeIA(const std::vector<LinkInfo> &edges, int ownVertices) const; // формирование массива IA
+    std::vector<int> MakeJA(const std::vector<LinkInfo> &edges, const std::vector<int> ia, int ownVertices, std::unordered_map<int, int> &global2local) const; // формирование массива JA
 
-    void PrintEdges(LinkInfo *edges, int ownVertices) const; // вывод рёбер
-    void PrintArray(int *array, int n, const char *message) const; // вывод массива
+    void PrintEdges(const std::vector<LinkInfo> &edges, int ownVertices) const; // вывод рёбер
+    void PrintArray(const std::vector<int> array, const char *message) const; // вывод массива
 public:
     GraphGenerator(std::ofstream &fout, int nx, int ny, int k1, int k2, int px, int py, bool debug);
 
-    int Generate(int id, int &totalVertices, int &ownVertices, int *&ia, int *&ja, int *&l2g, int *&part);
+    Graph Generate(int id);
 };

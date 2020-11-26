@@ -5,6 +5,7 @@
 #include <vector>
 #include "Types.h"
 
+// схема обменов
 struct Communication {
     std::vector<int> neighbours;
     std::vector<int> sendOffset;
@@ -14,19 +15,15 @@ struct Communication {
 };
 
 class CommunicationGenerator {
-    int totalVertices; // общее количество вершин
-    int ownVertices; // количество своих вершин
-    int *ia;
-    int *ja;
-    int *part;
-    int *l2g;
     int processCount; // количество процессов
     bool debug; // нужна ли отладка
     std::ofstream &fout;
 
-    void PrintVector(const std::vector<int> &vector, bool global = false) const; // вывод вектора
+    void PrintVector(const std::vector<int> &vector) const; // вывод вектора
+    void PrintVector(const std::vector<int> &vector, const std::vector<int> &l2g) const; // вывод вектора с глобальными вершинами
+    void PrintDebug(const Graph &graph, const Communication &communication, std::vector<std::vector<int>> sendToProcess, std::vector<std::vector<int>> recvFromProcess) const; // вывод отладочной информации
 public:
-    CommunicationGenerator(std::ofstream &fout, int totalVertices, int ownVertices, int *ia, int *ja, int *part, int *l2g, int processCount, bool debug);
+    CommunicationGenerator(std::ofstream &fout, int processCount, bool debug);
 
-    Communication Build(); // построение схемы обменов
+    Communication Build(const Graph &graph); // построение схемы обменов
 };

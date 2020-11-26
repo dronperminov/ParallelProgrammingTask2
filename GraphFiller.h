@@ -19,17 +19,12 @@ inline double Fb(int i) {
 }
 
 class GraphFiller {
-    int ownVertices; // количество своих вершин
-    int totalVertices; // общее количество вершин
-    int *ia;
-    int *ja;
-    int *l2g;
     bool debug; // нужна ли отладка
     std::ofstream &fout;
 
-    void PrintDebug(double *a, double *b) const; // вывод отладочных значений
+    void PrintDebug(const Graph& graph) const; // вывод отладочных значений
 public:
-    GraphFiller(std::ofstream &fout, int totalVertices, int ownVertices, int *ia, int *ja, int *l2g, bool debug);
+    GraphFiller(std::ofstream &fout, bool debug);
 
-    void Fill(double *&a, double *&b) const; // заполнение
+    void Fill(Graph &graph) const; // заполнение
 };

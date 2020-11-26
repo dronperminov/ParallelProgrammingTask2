@@ -81,36 +81,18 @@ void Solve(const ArgumentParser& parser, int pid, int processCount) {
     double eps = parser.GetEps();
     int debug = parser.GetDebug();
 
-    // выходные аргументы
-    int totalVertices = 0;
-    int ownVertices = 0;
-    int *ia = NULL;
-    int *ja = NULL;
-    int *l2g = NULL;
-    int *part = NULL;
-    double *a = NULL;
-    double *b = NULL;
-
     ofstream fout("log/" + to_string(pid) + ".txt"); // создаём лог файл для данного процесса
 
     GraphGenerator graphGenerator(fout, nx, ny, k1, k2, px, py, debug == FULL_DEBUG);
-    graphGenerator.Generate(pid, totalVertices, ownVertices, ia, ja, l2g, part); // запускаем генерацию
+    Graph graph = graphGenerator.Generate(pid); // запускаем генерацию
 
-    GraphFiller graphFiller(fout, totalVertices, ownVertices, ia, ja, l2g, debug == FULL_DEBUG);
-    graphFiller.Fill(a, b);
+    GraphFiller graphFiller(fout, debug == FULL_DEBUG);
+    graphFiller.Fill(graph);
 
-    CommunicationGenerator communicationGenerator(fout, totalVertices, ownVertices, ia, ja, part, l2g, processCount, debug == FULL_DEBUG);
-    Communication communication = communicationGenerator.Build();
+    CommunicationGenerator communicationGenerator(fout, processCount, debug == FULL_DEBUG);
+    Communication communication = communicationGenerator.Build(graph);
 
     fout.close();
-
-    // освобождаем выделенную память
-    delete[] ia;
-    delete[] ja;
-    delete[] l2g;
-    delete[] part;
-    delete[] a;
-    delete[] b;
 }
 
 int main(int argc, char **argv) {
