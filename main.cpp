@@ -98,7 +98,7 @@ int main(int argc, char **argv) {
 
     ArgumentParser parser;
 
-    if (!parser.ParseArgs(argc, argv)) {
+    if (!parser.ParseArgs(argc, argv, processCount)) {
         MPI_Abort(MPI_COMM_WORLD, -1);
         return -1;
     }

@@ -189,7 +189,7 @@ bool ArgumentParser::ParseFromArgv(int argc, char **argv) {
     return true;
 }
 
-bool ArgumentParser::ParseArgs(int argc, char **argv) {
+bool ArgumentParser::ParseArgs(int argc, char **argv, int processCount) {
     if (argc != 2 && argc != 3 && argc != 8 && argc != 9) { // если некорректное количество аргументов
         std::cout << "Error: invalid arguments. Try ./main --help for usage";
         return false;
@@ -201,12 +201,17 @@ bool ArgumentParser::ParseArgs(int argc, char **argv) {
     if (argc == 2 || argc == 3) {
         isCorrect = ParseFromFile(argv[1]);
     }
-    else { // запуск вида ./main nx ny k1 k2 eps T [debug]
+    else { // запуск вида ./main nx ny k1 k2 px py eps [debug]
         isCorrect = ParseFromArgv(argc, argv);
     }
 
     if (!isCorrect)
         return false;
+
+    if (params.px * params.py != processCount) {
+        std::cout << "Error: process count != px*py (" << params.px << "x" << params.py << " != " << processCount << ")" << std::endl;
+        return false;
+    }
 
     if (argc == 3) {
         isCorrect = ParseDebug(argv[2]);

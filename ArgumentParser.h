@@ -15,7 +15,7 @@ class ArgumentParser {
     bool ParseFromFile(const char *path); // парсинг из файла
     bool ParseFromArgv(int argc, char **argv); // парсинг из аргументов
 public:
-    bool ParseArgs(int argc, char **argv);
+    bool ParseArgs(int argc, char **argv, int processCount);
 
     TaskParams GetParams() const; // получение аргументов
     void PrintArguments() const; // вывод аргументов
