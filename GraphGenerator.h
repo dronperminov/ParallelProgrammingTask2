@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <unordered_map>
 #include <omp.h>
 #include "Types.h"
 
@@ -33,17 +34,16 @@ class GraphGenerator {
     int GetOwnVerticesCount(int i_start, int i_end, int j_start, int j_end) const; // количество собственных вершин в области
     int GetHaloVerices(int i_start, int i_end, int j_start, int j_end) const; // количество HALO вершин в области
 
-    void GenerateOwnVertices(int id, int i_start, int i_end, int j_start, int j_end, int &local, int *g2l, int *l2g, int *part); // формирование собственных вершин
-    void GenerateHaloVertices(int id, int i_start, int i_end, int j_start, int j_end, int &local, int *g2l, int *l2g, int *part); // формирование HALO вершин
+    void GenerateOwnVertices(int id, int i_start, int i_end, int j_start, int j_end, int &local, int *l2g, int *part); // формирование собственных вершин
+    void GenerateHaloVertices(int id, int i_start, int i_end, int j_start, int j_end, int &local, int *l2g, int *part); // формирование HALO вершин
 
-    LinkInfo* MakeEdges(int n) const; // формирование рёбер
-    int GetNotZeroCount(int *array, int n) const; // получение количества ненулевых элементов
+    LinkInfo* MakeEdges(int ownVertices, int *l2g) const; // формирование рёбер для вершины v
+    int* MakeIA(LinkInfo *edges, int ownVertices) const; // формирование массива IA
 
-    void PrintEdges(LinkInfo *edges, int n) const; // вывод рёбер
+    void PrintEdges(LinkInfo *edges, int ownVertices) const; // вывод рёбер
     void PrintArray(int *array, int n, const char *message) const; // вывод массива
-    void PrintInfo(int n, int *ia, int *ja, const ms &time) const; // вывод сводной информации
 public:
     GraphGenerator(int nx, int ny, int k1, int k2, int px, int py, bool debug);
 
-    int Generate(int &n, int *&ia, int *&ja, int *&g2l, int *&l2g, int *&part, bool showInfo = true);
+    int Generate(int id, int &totalVertices, int &ownVertices, int *&ia, int *&ja, int *&l2g, int *&part);
 };

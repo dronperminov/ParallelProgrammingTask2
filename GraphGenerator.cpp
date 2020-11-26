@@ -90,29 +90,30 @@ int GraphGenerator::GetVerticesCount() const {
 }
 
 // формирование рёбер
-LinkInfo* GraphGenerator::MakeEdges(int n) const {
-    LinkInfo *edges = new LinkInfo[n]; // создаём список смежности
+LinkInfo* GraphGenerator::MakeEdges(int ownVertices, int *l2g) const {
+    LinkInfo *edges = new LinkInfo[ownVertices];
 
-    for (int v = 0; v < n; v++) {
+    for (int i = 0; i < ownVertices; i++) {
+        int v = l2g[i];
         int index = Vertex2Index(v);
         int x = index % nx;
         int y = index / nx;
 
-        edges[v].count = 0;
+        edges[i].count = 0;
 
         // соседняя сверху, если не нижнетреугольная ячейка
         if (y > 0 && !IsDownVertex(v))
-            edges[v].vertices[edges[v].count++] = Index2Vertex((y - 1) * nx + x);
+            edges[i].vertices[edges[i].count++] = Index2Vertex((y - 1) * nx + x);
 
         // соседняя слева
         if (x > 0 || (x == 0 && IsUpVertex(v)))
-            edges[v].vertices[edges[v].count++] = v - 1;
+            edges[i].vertices[edges[i].count++] = v - 1;
 
-        edges[v].vertices[edges[v].count++] = v;
+        edges[i].vertices[edges[i].count++] = v;
 
         // соседняя справа
         if (x < nx - 1 || (x == nx - 1 && IsDownVertex(v)))
-            edges[v].vertices[edges[v].count++] = v + 1;
+            edges[i].vertices[edges[i].count++] = v + 1;
 
         // соседняя снизу, если не верхнетреугольная ячейка
         if (y < ny - 1 && !IsUpVertex(v)) {
@@ -121,20 +122,30 @@ LinkInfo* GraphGenerator::MakeEdges(int n) const {
             if (IsTriangleVertex(vertex))
                 vertex++;
 
-            edges[v].vertices[edges[v].count++] = vertex;
+            edges[i].vertices[edges[i].count++] = vertex;
         }
     }
 
     return edges;
 }
 
-// вывод рёбер
-void GraphGenerator::PrintEdges(LinkInfo *edges, int n) const {
-    std::cout << std::endl;
-    std::cout << "Edges list: " << std::endl;
+// формирование массива IA
+int* GraphGenerator::MakeIA(LinkInfo *edges, int ownVertices) const {
+    int *ia = new int[ownVertices + 1];
+    ia[0] = 0;
 
-    for (int i = 0; i < n; i++) {
-        std::cout << i << " -> [ ";
+    for (int i = 0; i < ownVertices; i++)
+        ia[i + 1] = ia[i] + edges[i].count;
+
+    return ia;
+}
+
+// вывод рёбер
+void GraphGenerator::PrintEdges(LinkInfo *edges, int ownVertices) const {
+    std::cout << "    Edges list: " << std::endl;
+
+    for (int i = 0; i < ownVertices; i++) {
+        std::cout << "      " << i << " -> [ ";
 
         for (int j = 0; j < edges[i].count; j++)
             std::cout << edges[i].vertices[j] << " ";
@@ -151,30 +162,6 @@ void GraphGenerator::PrintArray(int *array, int n, const char *message) const {
         std::cout << array[i] << " ";
 
     std::cout << "]" << std::endl;
-}
-
-// вывод сводной информации
-void GraphGenerator::PrintInfo(int n, int *ia, int *ja, const ms &time) const {
-    std::cout << "+--------------------------------------+" << std::endl;
-    std::cout << "|             Generate part            |" << std::endl;
-    std::cout << "+--------------------+-----------------+" << std::endl;
-    std::cout << "|           Vertices | " << std::setw(15) << n << " |" << std::endl;
-    std::cout << "|              Edges | " << std::setw(15) << ia[n] << " |" << std::endl;
-    std::cout << "| Portrait non zeros | " << std::setw(15) << GetNotZeroCount(ja, ia[n]) << " |" << std::endl;
-    std::cout << "|   Elapsed time, ms | " << std::setw(15) << time.count() << " |" << std::endl;
-    std::cout << "+--------------------+-----------------+" << std::endl;
-    std::cout << std::endl;
-}
-
-// получение количества ненулевых элементов
-int GraphGenerator::GetNotZeroCount(int *array, int n) const {
-    int count = 0;
-
-    for (int i = 0; i < n; i++)
-        if (array[i])
-            count++;
-
-    return count;
 }
 
 GraphGenerator::GraphGenerator(int nx, int ny, int k1, int k2, int px, int py, bool debug) {
@@ -230,17 +217,15 @@ int GraphGenerator::GetHaloVerices(int i_start, int i_end, int j_start, int j_en
 }
 
 // формирование собственных вершин
-void GraphGenerator::GenerateOwnVertices(int id, int i_start, int i_end, int j_start, int j_end, int &local, int *g2l, int *l2g, int *part) {
+void GraphGenerator::GenerateOwnVertices(int id, int i_start, int i_end, int j_start, int j_end, int &local, int *l2g, int *part) {
     for (int i = i_start; i < i_end; i++) {
         for (int j = j_start; j < j_end; j++) {
             int vertex = Index2Vertex(i * nx + j);
 
-            g2l[local] = local;
             l2g[local] = vertex;
             part[local++] = id;
 
             if (IsTriangleVertex(vertex)) {
-                g2l[local] = local;
                 l2g[local] = vertex + 1;
                 part[local++] = id;                 
             }
@@ -249,10 +234,9 @@ void GraphGenerator::GenerateOwnVertices(int id, int i_start, int i_end, int j_s
 }
 
 // формирование HALO вершин
-void GraphGenerator::GenerateHaloVertices(int id, int i_start, int i_end, int j_start, int j_end, int &local, int *g2l, int *l2g, int *part) {
+void GraphGenerator::GenerateHaloVertices(int id, int i_start, int i_end, int j_start, int j_end, int &local, int *l2g, int *part) {
     if (i_start > 0) {
         for (int j = j_start; j < j_end; j++) {
-            g2l[local] = local;
             l2g[local] = Index2Vertex((i_start - 1) * nx + j);
             part[local++] = id - px;
         }
@@ -265,13 +249,11 @@ void GraphGenerator::GenerateHaloVertices(int id, int i_start, int i_end, int j_
             if (IsTriangleVertex(vertex))
                 vertex++;
 
-            g2l[local] = local;
             l2g[local] = vertex;
             part[local++] = id - 1;
         }
 
         if (j_end < nx) {
-            g2l[local] = local;
             l2g[local] = Index2Vertex(i * nx + j_end);
             part[local++] = id + 1;
         }
@@ -284,55 +266,70 @@ void GraphGenerator::GenerateHaloVertices(int id, int i_start, int i_end, int j_
             if (IsTriangleVertex(vertex))
                 vertex++;
 
-            g2l[local] = local;
             l2g[local] = vertex;
             part[local++] = id + px;
         }
     }
 }
 
-int GraphGenerator::Generate(int &n, int *&ia, int *&ja, int *&g2l, int *&l2g, int *&part, bool showInfo) {
-    n = GetVerticesCount(); // получаем количество вершин
+int GraphGenerator::Generate(int id, int &totalVertices, int &ownVertices, int *&ia, int *&ja, int *&l2g, int *&part) {
+    int idx = id % px;
+    int idy = id / px;
 
-    for (int id = 0; id < px * py; id++) {
-        int idx = id % px;
-        int idy = id / px;
+    // границы области процесса по вертикали
+    int i_start = Process2StartRow(idy);
+    int i_end = Process2StartRow(idy + 1);
 
-        // границы области процесса по вертикали
-        int i_start = Process2StartRow(idy);
-        int i_end = Process2StartRow(idy + 1);
+    // границы области процесса по горизонтали
+    int j_start = Process2StartColumn(idx);
+    int j_end = Process2StartColumn(idx + 1);
 
-        // границы области процесса по горизонтали
-        int j_start = Process2StartColumn(idx);
-        int j_end = Process2StartColumn(idx + 1);
+    ownVertices = GetOwnVerticesCount(i_start, i_end, j_start, j_end); // количество собственных вершин в области
+    int haloVertices = GetHaloVerices(i_start, i_end, j_start, j_end); // количество HALO вершин в области
+    totalVertices = ownVertices + haloVertices;
 
-        int ownVertices = GetOwnVerticesCount(i_start, i_end, j_start, j_end); // количество собственных вершин в области
-        int haloVertices = GetHaloVerices(i_start, i_end, j_start, j_end); // количество HALO вершин в области
+    if (debug) {
+        std::cout << "P" << id << ": " << std::endl;
+        std::cout << "    rows: [" << i_start << ", " << i_end << ")" << std::endl;
+        std::cout << "    columns: [" << j_start << ", " << j_end << "), " << std::endl;
+        std::cout << "    OWN vertices (No): " << ownVertices << std::endl;
+        std::cout << "    HALO vertices: " << haloVertices << std::endl;
+        std::cout << "    TOTAL vertices (N): " << totalVertices << std::endl;
+    }
 
-        if (debug) {
-            std::cout << "P" << id << ": " << std::endl;
-            std::cout << "    rows: [" << i_start << ", " << i_end << ")" << std::endl;
-            std::cout << "    columns: [" << j_start << ", " << j_end << "), " << std::endl;
-            std::cout << "    OWN vertices: " << ownVertices << std::endl;
-            std::cout << "    HALO vertices: " << haloVertices << std::endl;
-        }
+    l2g = new int[totalVertices];
+    part = new int[totalVertices];
 
-        int total = ownVertices + haloVertices;
+    int local = 0;
+    GenerateOwnVertices(id, i_start, i_end, j_start, j_end, local, l2g, part);
+    GenerateHaloVertices(id, i_start, i_end, j_start, j_end, local, l2g, part);
 
-        g2l = new int[total];
-        l2g = new int[total];
-        part = new int[total];
+    std::unordered_map<int, int> global2local;
 
-        int local = 0;
-        GenerateOwnVertices(id, i_start, i_end, j_start, j_end, local, g2l, l2g, part);
-        GenerateHaloVertices(id, i_start, i_end, j_start, j_end, local, g2l, l2g, part);        
+    for (int i = 0; i < totalVertices; i++)
+        global2local[l2g[i]] = i;
 
-        if (debug) {
-            PrintArray(g2l, total, "    G2L");
-            PrintArray(l2g, total, "    L2G");
-            PrintArray(part, total, "    Part");
-            std::cout << std::endl;
-        }
+    LinkInfo *edges = MakeEdges(ownVertices, l2g);
+    ia = MakeIA(edges, ownVertices);
+    ja = new int[ia[ownVertices]];
+
+    for (int i = 0; i < ownVertices; i++)
+        for (int j = 0; j < edges[i].count; j++)
+            ja[ia[i] + j] = global2local[edges[i].vertices[j]];
+
+    if (debug) {
+        int *jag = new int[ia[ownVertices]];
+
+        for (int i = 0; i < ia[ownVertices]; i++)
+            jag[i] = l2g[ja[i]];
+
+        PrintArray(l2g, totalVertices, "    L2G");
+        PrintArray(part, totalVertices, "    Part");
+        PrintArray(ia, ownVertices + 1, "    IA");
+        PrintArray(ja, ia[ownVertices], "    JA");
+        PrintArray(jag, ia[ownVertices], "    JA (GLOBAL)");
+        PrintEdges(edges, ownVertices);
+        std::cout << std::endl;
     }
 
     return 0; // возвращаем время

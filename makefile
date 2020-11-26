@@ -1,8 +1,11 @@
-COMPILER=g++
-FLAGS=-O3 -fopenmp -pedantic -Wall
+COMPILER=mpicxx
+FLAGS=-O3 -pedantic -Wall -std=c++11
 FILES=ArgumentParser.cpp GraphGenerator.cpp
 
-all: main
+all: main execute
 
 main:
-	$(COMPILER) $(FLAGS) $(FILES) main.cpp -o main && main 4 4 3 4 2 2 1e-5 f
+	$(COMPILER) $(FLAGS) $(FILES) main.cpp -o main
+
+execute:
+	rm output.txt -f && mpisubmit.pl -p 4 --stdout=output.txt --stderr=/dev/null ./main 4 4 3 4 2 2 1e-5 f
