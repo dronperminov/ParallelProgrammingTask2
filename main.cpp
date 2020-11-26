@@ -70,26 +70,16 @@ bool CheckHelp(int argc, char **argv, int pid) {
     return false;
 }
 
-void Solve(const ArgumentParser& parser, int pid, int processCount) {
-    // входные аргументы
-    int nx = parser.GetNx();
-    int ny = parser.GetNy();
-    int k1 = parser.GetK1();
-    int k2 = parser.GetK2();
-    int px = parser.GetPx();
-    int py = parser.GetPy();
-    double eps = parser.GetEps();
-    int debug = parser.GetDebug();
-
+void Solve(TaskParams params, int pid, int processCount) {
     ofstream fout("log/" + to_string(pid) + ".txt"); // создаём лог файл для данного процесса
 
-    GraphGenerator graphGenerator(fout, nx, ny, k1, k2, px, py, debug == FULL_DEBUG);
+    GraphGenerator graphGenerator(fout, params);
     Graph graph = graphGenerator.Generate(pid); // запускаем генерацию
 
-    GraphFiller graphFiller(fout, debug == FULL_DEBUG);
+    GraphFiller graphFiller(fout, params.debug == FULL_DEBUG);
     graphFiller.Fill(graph);
 
-    CommunicationGenerator communicationGenerator(fout, processCount, debug == FULL_DEBUG);
+    CommunicationGenerator communicationGenerator(fout, processCount, params.debug == FULL_DEBUG);
     Communication communication = communicationGenerator.Build(graph);
 
     fout.close();
@@ -113,8 +103,10 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    if (parser.GetDebug() == FULL_DEBUG && pid == 0)
+    TaskParams params = parser.GetParams();
+
+    if (params.debug == FULL_DEBUG && pid == 0)
         parser.PrintArguments();
 
-    Solve(parser, pid, processCount);
+    Solve(params, pid, processCount);
 }

@@ -6,14 +6,7 @@
 #include "Types.h"
 
 class ArgumentParser {
-    int nx; // количество столбцов сетки
-    int ny; // количество строк сетки
-    int k1; // количество клеток без деления
-    int k2; // количество клеток с делением
-    int px; // разбиение по x
-    int py; // разбиение по y
-    double eps; // точность
-    int debug; // режим отладки
+    TaskParams params;
 
     bool IsInteger(const char *s) const; // проверка, что строка является целым числом
     bool IsReal(const char *s) const; // проверка, что строка является вещественным числом
@@ -24,16 +17,6 @@ class ArgumentParser {
 public:
     bool ParseArgs(int argc, char **argv);
 
-    // получение аргументов
-    int GetNx() const;
-    int GetNy() const;
-    int GetK1() const;
-    int GetK2() const;
-    int GetPx() const;
-    int GetPy() const;
-    double GetEps() const;
-    
-    int GetDebug() const;
-
+    TaskParams GetParams() const; // получение аргументов
     void PrintArguments() const; // вывод аргументов
 };

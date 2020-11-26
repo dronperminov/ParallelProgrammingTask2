@@ -42,17 +42,17 @@ bool ArgumentParser::IsReal(const char *s) const {
 // парсинг отладки
 bool ArgumentParser::ParseDebug(char *arg) {
     if (!strcmp(arg, "f")) {
-        debug = FULL_DEBUG;
+        params.debug = FULL_DEBUG;
         return true;
     }
 
     if (!strcmp(arg, "s")) {
-        debug = SOLVE_DEBUG;
+        params.debug = SOLVE_DEBUG;
         return true;
     }
 
     if (!strcmp(arg, "n")) {
-        debug = NO_DEBUG;
+        params.debug = NO_DEBUG;
         return true;
     }
 
@@ -69,7 +69,7 @@ bool ArgumentParser::ParseFromFile(const char *path) {
         return false;
     }
 
-    if (!(f >> nx >> ny >> k1 >> k2 >> px >> py >> eps)) {
+    if (!(f >> params.nx >> params.ny >> params.k1 >> params.k2 >> params.px >> params.py >> params.eps)) {
         std::cout << "Error: unable to read from file" << std::endl;
         f.close(); // закрываем файл
         return false;
@@ -77,42 +77,42 @@ bool ArgumentParser::ParseFromFile(const char *path) {
 
     f.close(); // закрываем файл
 
-    if (nx < 1) {
-        std::cout << "Error: Nx parameter in file is invalid (" << nx << ")" << std::endl;
+    if (params.nx < 1) {
+        std::cout << "Error: Nx parameter in file is invalid (" << params.nx << ")" << std::endl;
         return false;
     }
 
-    if (ny < 1) {
-        std::cout << "Error: Ny parameter in file is invalid (" << ny << ")" << std::endl;
+    if (params.ny < 1) {
+        std::cout << "Error: Ny parameter in file is invalid (" << params.ny << ")" << std::endl;
         return false;
     }
 
-    if (k1 < 0) {
-        std::cout << "Error: k1 parameter in file is invalid (" << k1 << ")" << std::endl;
+    if (params.k1 < 0) {
+        std::cout << "Error: k1 parameter in file is invalid (" << params.k1 << ")" << std::endl;
         return false;
     }
 
-    if (k2 < 0) {
-        std::cout << "Error: k2 parameter in file is invalid (" << k2 << ")" << std::endl;
+    if (params.k2 < 0) {
+        std::cout << "Error: k2 parameter in file is invalid (" << params.k2 << ")" << std::endl;
         return false;
     }
 
-    if (px < 1) {
-        std::cout << "Error: Px parameter in file is invalid (" << px << ")" << std::endl;
+    if (params.px < 1) {
+        std::cout << "Error: Px parameter in file is invalid (" << params.px << ")" << std::endl;
         return false;
     }
 
-    if (py < 1) {
-        std::cout << "Error: Py parameter in file is invalid (" << py << ")" << std::endl;
+    if (params.py < 1) {
+        std::cout << "Error: Py parameter in file is invalid (" << params.py << ")" << std::endl;
         return false;
     }
 
-    if (eps < 1e-15) {
-        std::cout << "Error: eps parameter in file is invalid (" << eps << ")" << std::endl;
+    if (params.eps < 1e-15) {
+        std::cout << "Error: eps parameter in file is invalid (" << params.eps << ")" << std::endl;
         return false;
     }
 
-    if (k1 + k2 == 0) {
+    if (params.k1 + params.k2 == 0) {
         std::cout << "Error: k1 and k2 == 0" << std::endl;
         return false;
     }
@@ -158,31 +158,31 @@ bool ArgumentParser::ParseFromArgv(int argc, char **argv) {
     }
 
     // парсим в настоящие аргументы
-    nx = atoi(argv[1]);
-    ny = atoi(argv[2]);
-    k1 = atoi(argv[3]);
-    k2 = atoi(argv[4]);
-    px = atoi(argv[5]);
-    py = atoi(argv[6]);
-    eps = atof(argv[7]);
+    params.nx = atoi(argv[1]);
+    params.ny = atoi(argv[2]);
+    params.k1 = atoi(argv[3]);
+    params.k2 = atoi(argv[4]);
+    params.px = atoi(argv[5]);
+    params.py = atoi(argv[6]);
+    params.eps = atof(argv[7]);
     
-    if (nx == 0 || ny == 0) {
+    if (params.nx == 0 || params.ny == 0) {
         std::cout << "Error: invalid value of Nx or Ny " << std::endl;
         return false;
     }
 
-    if (k1 + k2 == 0) {
+    if (params.k1 + params.k2 == 0) {
         std::cout << "Error: k1 and k2 == 0" << std::endl;
         return false;
     }
 
-    if (px == 0 || py == 0) {
+    if (params.px == 0 || params.py == 0) {
         std::cout << "Error: invalid value of Px or Py " << std::endl;
         return false;
     }
 
-    if (eps < 1e-15) {
-        std::cout << "Error: eps parameter is invalid (" << eps << ")" << std::endl;
+    if (params.eps < 1e-15) {
+        std::cout << "Error: eps parameter is invalid (" << params.eps << ")" << std::endl;
         return false;
     }
 
@@ -215,52 +215,24 @@ bool ArgumentParser::ParseArgs(int argc, char **argv) {
         isCorrect = ParseDebug(argv[8]);
     }
     else {
-        debug = NO_DEBUG;
+        params.debug = NO_DEBUG;
     }
 
     return isCorrect;
 }
 
-int ArgumentParser::GetNx() const {
-    return nx;
-}
-
-int ArgumentParser::GetNy() const {
-    return ny;
-}
-
-int ArgumentParser::GetK1() const {
-    return k1;
-}
-
-int ArgumentParser::GetK2() const {
-    return k2;
-}
-
-int ArgumentParser::GetPx() const {
-    return px;
-}
-
-int ArgumentParser::GetPy() const {
-    return py;
-}
-
-double ArgumentParser::GetEps() const {
-    return eps;
-}
-
-int ArgumentParser::GetDebug() const {
-    return debug;
+TaskParams ArgumentParser::GetParams() const {
+    return params;
 }
 
 // вывод аргументов
 void ArgumentParser::PrintArguments() const {
     std::cout << "Parsed arguments:" << std::endl;
-    std::cout << "Nx: " << nx << std::endl;
-    std::cout << "Ny: " << ny << std::endl;
-    std::cout << "k1: " << k1 << std::endl;
-    std::cout << "k2: " << k2 << std::endl;
-    std::cout << "Px: " << px << std::endl;
-    std::cout << "Py: " << py << std::endl;
-    std::cout << "eps: " << eps << std::endl;
+    std::cout << "Nx: " << params.nx << std::endl;
+    std::cout << "Ny: " << params.ny << std::endl;
+    std::cout << "k1: " << params.k1 << std::endl;
+    std::cout << "k2: " << params.k2 << std::endl;
+    std::cout << "Px: " << params.px << std::endl;
+    std::cout << "Py: " << params.py << std::endl;
+    std::cout << "eps: " << params.eps << std::endl;
 }

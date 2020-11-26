@@ -11,6 +11,15 @@ typedef std::chrono::high_resolution_clock Time;
 typedef std::chrono::time_point<Time> TimePoint;
 typedef std::chrono::milliseconds ms;
 
+// параметры задачи
+struct TaskParams {
+    int nx, ny; // размеры сетки
+    int k1, k2; // параметры разбиения
+    int px, py; // количество областей для процессов
+    double eps; // точность вычисления
+    int debug; // уровень отладки
+};
+
 struct Graph {
     int totalVertices; // общее количество вершин
     int haloVertices;

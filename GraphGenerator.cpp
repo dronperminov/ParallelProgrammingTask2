@@ -151,17 +151,17 @@ void GraphGenerator::PrintArray(const std::vector<int> array, const char *messag
     fout << "]" << std::endl;
 }
 
-GraphGenerator::GraphGenerator(std::ofstream &fout, int nx, int ny, int k1, int k2, int px, int py, bool debug) : fout(fout) {
-    this->nx = nx;
-    this->ny = ny;
+GraphGenerator::GraphGenerator(std::ofstream &fout, TaskParams params) : fout(fout) {
+    this->nx = params.nx;
+    this->ny = params.ny;
 
-    this->k1 = k1;
-    this->k2 = k2;
+    this->k1 = params.k1;
+    this->k2 = params.k2;
 
-    this->px = px;
-    this->py = py;
+    this->px = params.px;
+    this->py = params.py;
 
-    this->debug = debug;
+    this->debug = params.debug == FULL_DEBUG;
 }
 
 // количество вершин в области
