@@ -275,8 +275,10 @@ Grid.prototype.GetAreaInfo = function(id) {
         }
 
         a[diagIndex] = 1.234 * sum;
-        b[i] = this.Fb(l2g[i]);
     }
+
+    for (let i = 0; i < totalVertices; i++)
+        b[i] = this.Fb(l2g[i]);
 
     return {
         ownVertices: ownVertices,
@@ -499,7 +501,7 @@ Grid.prototype.Round = function(x) {
 }
 
 Grid.prototype.MakeFill = function(ia, ja, a, b, l2g) {
-    let html = "<b>Коэффициенты матрицы и правой части</b><br>"
+    let html = "<b>Коэффициенты матрицы</b><br>"
 
     for (let i = 0; i < ia.length - 1; i++) {
         let row = []
@@ -507,9 +509,15 @@ Grid.prototype.MakeFill = function(ia, ja, a, b, l2g) {
         for (let j = ia[i]; j < ia[i + 1]; j++)
             row.push(this.Round(a[j]))
 
-        html += "<b style='margin-left: 22px'>" + i + " (" + l2g[i] + ")</b>&rarr;[" + row.join(", ") + "] = " + this.Round(b[i]) + "<br>"
+        html += "<b style='margin-left: 22px'>" + i + " (" + l2g[i] + ")</b>&rarr;[" + row.join(", ") + "]<br>"
     }
 
+
+    br = []
+    for (let i = 0; i < b.length; i++)
+        br[i] = this.Round(b[i])
+
+    html += "</li><br><li><b>Вектор правой части</b>: [" + br.join(", ") + "]"
     return html
 }
 
@@ -660,8 +668,9 @@ Grid.prototype.AddResults = function() {
 
         this.result.innerHTML += "<h3 style='margin-bottom: 0; background:" + color + "'>Процесс P" + id + ":</h3>"
         this.result.innerHTML += "<ul style='margin: 0; padding: 0'>"
-        this.result.innerHTML += "<li><b>OWN</b>: " + info.ownVertices + "</li>"
+        this.result.innerHTML += "<li><b>OWN (No)</b>: " + info.ownVertices + "</li>"
         this.result.innerHTML += "<li><b>HALO</b>: " + info.haloVertices + "</li>"
+        this.result.innerHTML += "<li><b>TOTAL (N)</b>: " + info.totalVertices + "</li>"
 
         this.result.innerHTML += "<br><li><b>L2G</b>: [" + info.l2g.join(", ") + "]</li>"
         this.result.innerHTML += "<li><b>Part</b>: [" + info.part.join(", ") + "]</li>"
