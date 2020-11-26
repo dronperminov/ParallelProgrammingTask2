@@ -255,6 +255,29 @@ Grid.prototype.GetAreaInfo = function(id) {
         }
     }
 
+    a = []
+    b = []
+
+    for (let i = 0; i < ownVertices; i++) {
+        let sum = 0
+        let diagIndex = -1;
+
+        for (let index = ia[i]; index < ia[i + 1]; index++) {
+            let j = ja[index];
+
+            if (i != j) {
+                a[index] = this.Fa(l2g[i], l2g[j]); // a_ij
+                sum += Math.abs(a[index]); // наразиваем сумму внедиагональных элементов
+            }
+            else {
+                diagIndex = index;
+            }
+        }
+
+        a[diagIndex] = 1.234 * sum;
+        b[i] = this.Fb(l2g[i]);
+    }
+
     return {
         ownVertices: ownVertices,
         haloVertices: haloVertices,
@@ -265,7 +288,9 @@ Grid.prototype.GetAreaInfo = function(id) {
         edges: edges,
         ia: ia,
         ja: ja,
-        jag: jag
+        jag: jag,
+        a: a,
+        b: b
     }
 }
 
@@ -312,9 +337,9 @@ Grid.prototype.MakeVerices = function() {
     this.result.innerHTML += "<br><b>Размер сетки:</b> " + this.nx + "x" + this.ny
     this.result.innerHTML += "<br><b>Параметры разбиения</b> " + this.k1 + ", " + this.k2
     this.result.innerHTML += "<br><b>Точность решения</b> " + this.eps
-    this.result.innerHTML += "<br><br><b>Прямоугольников:</b> " + rectangles
-    this.result.innerHTML += "<br><b>Треугольников:</b> " + triangles
-    this.result.innerHTML += "<br><b>Всего вершин:</b> " + this.vertices.length
+    // this.result.innerHTML += "<br><br><b>Прямоугольников:</b> " + rectangles
+    // this.result.innerHTML += "<br><b>Треугольников:</b> " + triangles
+    // this.result.innerHTML += "<br><b>Всего вершин:</b> " + this.vertices.length
     this.result.innerHTML += "<br>"
 }
 
@@ -473,8 +498,8 @@ Grid.prototype.Round = function(x) {
     return Math.round(x * 100000) / 100000
 }
 
-Grid.prototype.MakeFill = function(ia, ja, a, b) {
-    let html = "<br><b>Коэффициенты матрицы и правой части</b><br>"
+Grid.prototype.MakeFill = function(ia, ja, a, b, l2g) {
+    let html = "<b>Коэффициенты матрицы и правой части</b><br>"
 
     for (let i = 0; i < ia.length - 1; i++) {
         let row = []
@@ -482,7 +507,7 @@ Grid.prototype.MakeFill = function(ia, ja, a, b) {
         for (let j = ia[i]; j < ia[i + 1]; j++)
             row.push(this.Round(a[j]))
 
-        html += i + "&rarr;[" + row.join(", ") + "] = " + this.Round(b[i]) + "<br>"
+        html += "<b style='margin-left: 22px'>" + i + " (" + l2g[i] + ")</b>&rarr;[" + row.join(", ") + "] = " + this.Round(b[i]) + "<br>"
     }
 
     return html
@@ -633,16 +658,20 @@ Grid.prototype.AddResults = function() {
         let info = this.GetAreaInfo(id)
         let color = 'hsl(' + (360 * id / (this.px * this.py)) + ', 100%,90%)'
 
-        this.result.innerHTML += "<h3 style='margin-bottom: 0; background:" + color + "'>Процесс P" + id + ":</h3><ul style='margin: 0; padding: 0'>"
+        this.result.innerHTML += "<h3 style='margin-bottom: 0; background:" + color + "'>Процесс P" + id + ":</h3>"
+        this.result.innerHTML += "<ul style='margin: 0; padding: 0'>"
         this.result.innerHTML += "<li><b>OWN</b>: " + info.ownVertices + "</li>"
         this.result.innerHTML += "<li><b>HALO</b>: " + info.haloVertices + "</li>"
-        this.result.innerHTML += "<li><b>L2G</b>: [" + info.l2g.join(", ") + "]</li>"
+
+        this.result.innerHTML += "<br><li><b>L2G</b>: [" + info.l2g.join(", ") + "]</li>"
         this.result.innerHTML += "<li><b>Part</b>: [" + info.part.join(", ") + "]</li>"
         this.result.innerHTML += "<li><b>IA</b>: [" + info.ia.join(", ") + "]</li>"
         this.result.innerHTML += "<li><b>JA</b>: [" + info.ja.join(", ") + "]</li>"
         this.result.innerHTML += "<li><b>JA (GLOBAL)</b>: [" + info.jag.join(", ") + "]</li>"
-        this.result.innerHTML += "<li>" + this.MakeList(info.edges, info.l2g, info.ownVertices) + "</li>"
-        this.result.innerHTML += "</ul></p>"
+
+        this.result.innerHTML += "<br><li>" + this.MakeList(info.edges, info.l2g, info.ownVertices) + "</li>"
+
+        this.result.innerHTML += "<br><li>" + this.MakeFill(info.ia, info.ja, info.a, info.b, info.l2g) + "</li>"
     }
 
     // if (document.getElementById("edge-list-box").checked)
@@ -652,9 +681,6 @@ Grid.prototype.AddResults = function() {
     //     this.result.innerHTML += "<br><b>JA:</b> [" + ja.join(", ") + "]"
     //     this.result.innerHTML += "<br>"
     // }
-
-    // if (document.getElementById("matrix-box").checked)
-    //     this.result.innerHTML += this.MakeFill(ia, ja, filled.a, filled.b)
 
     // this.result.innerHTML += this.MakeSolve(ia, ja, filled.a, filled.b)
 }
