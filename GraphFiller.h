@@ -20,11 +20,10 @@ inline double Fb(int i) {
 
 class GraphFiller {
     bool debug; // нужна ли отладка
-    std::ofstream &fout;
 
     void PrintDebug(const Graph& graph) const; // вывод отладочных значений
 public:
-    GraphFiller(std::ofstream &fout, bool debug);
+    GraphFiller(bool debug);
 
     void Fill(Graph &graph) const; // заполнение
 };

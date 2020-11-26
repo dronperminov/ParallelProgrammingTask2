@@ -1,11 +1,12 @@
 #include "GraphFiller.h"
 
-GraphFiller::GraphFiller(std::ofstream &fout, bool debug) : fout(fout) {
+GraphFiller::GraphFiller(bool debug) {
     this->debug = debug;
 }
 
 // вывод отладочных значений
 void GraphFiller::PrintDebug(const Graph& graph) const {
+    std::ofstream fout("log/" + std::to_string(graph.id) + ".txt", std::ios::app);
     fout << "Filled values: A b" << std::endl;
 
     for (int i = 0; i < graph.ownVertices; i++) {
@@ -18,6 +19,7 @@ void GraphFiller::PrintDebug(const Graph& graph) const {
     }
 
     fout << std::endl;
+    fout.close();
 }
 
 // заполнение

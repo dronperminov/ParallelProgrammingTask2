@@ -1,12 +1,12 @@
 #include "CommunicationGenerator.h"
 
-CommunicationGenerator::CommunicationGenerator(std::ofstream &fout, int processCount, bool debug) : fout(fout) {
+CommunicationGenerator::CommunicationGenerator(int processCount, bool debug) {
     this->processCount = processCount;
     this->debug = debug;
 }
 
 // вывод вектора
-void CommunicationGenerator::PrintVector(const std::vector<int> &vector) const {
+void CommunicationGenerator::PrintVector(std::ofstream &fout, const std::vector<int> &vector) const {
     fout << "[ ";
 
     for (size_t i = 0; i < vector.size(); i++)
@@ -16,7 +16,7 @@ void CommunicationGenerator::PrintVector(const std::vector<int> &vector) const {
 }
 
 // вывод вектора с глобальными вершинами
-void CommunicationGenerator::PrintVector(const std::vector<int> &vector, const std::vector<int> &l2g) const {
+void CommunicationGenerator::PrintVector(std::ofstream &fout, const std::vector<int> &vector, const std::vector<int> &l2g) const {
     fout << "[ ";
 
     for (size_t i = 0; i < vector.size(); i++)
@@ -27,27 +27,30 @@ void CommunicationGenerator::PrintVector(const std::vector<int> &vector, const s
 
 // вывод отладочной информации
 void CommunicationGenerator::PrintDebug(const Graph &graph, const Communication &communication, std::vector<std::vector<int>> sendToProcess, std::vector<std::vector<int>> recvFromProcess) const {
+    std::ofstream fout("log/" + std::to_string(graph.id) + ".txt", std::ios::app);
+
     for (int p = 0; p < processCount; p++) {
         if (!sendToProcess[p].size())
             continue;
 
         fout << "SendToProcess P" << p << ":";
-        PrintVector(sendToProcess[p], graph.l2g);
+        PrintVector(fout, sendToProcess[p], graph.l2g);
         fout << "RecvFromProcess P" << p << ":";
-        PrintVector(recvFromProcess[p], graph.l2g);
+        PrintVector(fout, recvFromProcess[p], graph.l2g);
         fout << std::endl;
     }
 
     fout << "Neighbours: ";
-    PrintVector(communication.neighbours);
+    PrintVector(fout, communication.neighbours);
     fout << "Send: ";
-    PrintVector(communication.send, graph.l2g);
+    PrintVector(fout, communication.send, graph.l2g);
     fout << "Send offset: ";
-    PrintVector(communication.sendOffset);
+    PrintVector(fout, communication.sendOffset);
     fout << "Recv: ";
-    PrintVector(communication.recv, graph.l2g);
+    PrintVector(fout, communication.recv, graph.l2g);
     fout << "Recv offset: ";
-    PrintVector(communication.recvOffset);
+    PrintVector(fout, communication.recvOffset);
+    fout.close();
 }
 
 // построение схемы обменов

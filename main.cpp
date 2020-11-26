@@ -1,7 +1,6 @@
 #include <iostream>
 #include <fstream>
 #include <cstring>
-#include <string>
 #include <mpi.h>
 
 #include "ArgumentParser.h"
@@ -72,21 +71,17 @@ bool CheckHelp(int argc, char **argv, int pid) {
 }
 
 void Solve(TaskParams params, int pid, int processCount) {
-    ofstream fout("log/" + to_string(pid) + ".txt"); // создаём лог файл для данного процесса
-
-    GraphGenerator graphGenerator(fout, params);
+    GraphGenerator graphGenerator(params);
     Graph graph = graphGenerator.Generate(pid); // запускаем генерацию
 
-    GraphFiller graphFiller(fout, params.debug == FULL_DEBUG);
+    GraphFiller graphFiller(params.debug == FULL_DEBUG);
     graphFiller.Fill(graph);
 
-    CommunicationGenerator communicationGenerator(fout, processCount, params.debug == FULL_DEBUG);
+    CommunicationGenerator communicationGenerator(processCount, params.debug == FULL_DEBUG);
     Communication communication = communicationGenerator.Build(graph);
 
-    ConjugateGradientSolver solver(fout, params.eps, params.debug);
+    ConjugateGradientSolver solver(params.eps, params.debug);
     Solvation solvation = solver.Solve(graph, communication);
-
-    fout.close();
 }
 
 int main(int argc, char **argv) {

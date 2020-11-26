@@ -1,6 +1,6 @@
 #include "ConjugateGradientSolver.h"
 
-ConjugateGradientSolver::ConjugateGradientSolver(std::ofstream &fout, double eps, int debug) : fout(fout) {
+ConjugateGradientSolver::ConjugateGradientSolver(double eps, int debug) {
     this->eps = eps;
     this->debug = debug;
 }
@@ -29,7 +29,7 @@ void ConjugateGradientSolver::InitValues(const Graph &graph, std::vector<double>
 }
 
 // вывод вектора
-void ConjugateGradientSolver::PrintVector(const std::vector<double> &x) const {
+void ConjugateGradientSolver::PrintVector(std::ofstream &fout, const std::vector<double> &x) const {
     fout << "x: [ ";
 
     for (size_t i = 0; i < x.size(); i++) {
@@ -38,6 +38,17 @@ void ConjugateGradientSolver::PrintVector(const std::vector<double> &x) const {
 
     fout << "]" << std::endl;
     fout << std::endl;
+}
+
+// вывод отладки
+void ConjugateGradientSolver::PrintDebug(const Solvation &solvation, const std::vector<double> &norms, const std::vector<double> &rho, int id) const {
+    std::ofstream fout("log/" + std::to_string(id) + ".txt", std::ios::app);
+
+    for (int i = 0; i < solvation.iterations; i++)
+        fout << "Iteration " << i << ", |b - Ax|: " << norms[i] << ", rho: " << rho[i] << std::endl;
+
+    PrintVector(fout, solvation.x);
+    fout.close();
 }
 
 // решение системы
@@ -53,6 +64,9 @@ Solvation ConjugateGradientSolver::Solve(const Graph &graph, const Communication
     std::vector<double> q_k(graph.ownVertices);
     std::vector<double> debug_r(graph.ownVertices); // вектор для вычисления невязки в debug режиме
 
+    std::vector<double> norms; // нормы на каждой итерации
+    std::vector<double> rho;
+
     InitValues(graph, solvation.x, r, m); // инициализируем значения
 
     double rho_prev = 0; // предыдущее ро
@@ -64,7 +78,8 @@ Solvation ConjugateGradientSolver::Solve(const Graph &graph, const Communication
         double rho_k = Dot(r, z_k, graph.ownVertices); // rho_k = <r_0, z_k>
 
         if (debug != NO_DEBUG) {
-            fout << "Iteration " << solvation.iterations << ", |b - Ax|: " << GetResidualNorm(graph, communication, solvation.x, debug_r) << ", rho: " << rho_k << std::endl;
+            norms.push_back(GetResidualNorm(graph, communication, solvation.x, debug_r));
+            rho.push_back(rho_k);
         }
 
         if (solvation.iterations == 1) {
@@ -90,10 +105,11 @@ Solvation ConjugateGradientSolver::Solve(const Graph &graph, const Communication
     }
     while (!isConverge);
 
+    solvation.res = GetResidualNorm(graph, communication, solvation.x, debug_r);
+
     if (debug == FULL_DEBUG) {
-        PrintVector(solvation.x);
+        PrintDebug(solvation, norms, rho, graph.id);
     }
 
-    solvation.res = GetResidualNorm(graph, communication, solvation.x, debug_r);
     return solvation;
 }

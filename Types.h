@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <vector>
+#include <string>
 
 const int FULL_DEBUG = 2;
 const int SOLVE_DEBUG = 1;
@@ -25,6 +26,7 @@ struct Graph {
     int totalVertices; // общее количество вершин
     int haloVertices;
     int ownVertices; // количество своих вершин
+    int id; // номер процесса
 
     std::vector<int> l2g;
     std::vector<int> part;

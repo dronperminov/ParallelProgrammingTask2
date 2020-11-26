@@ -18,7 +18,6 @@ class GraphGenerator {
     int k1, k2; // параметры разбиения
     int px, py; // количество ращбиений на процессы
     bool debug; // нужна ли отладка
-    std::ofstream &fout; // лог файл
 
     bool IsTriangleVertex(int v) const; // проверка, что вершина треугольная
     bool IsUpVertex(int v) const; // проверка, что треугольная вершина сверху
@@ -41,11 +40,11 @@ class GraphGenerator {
     std::vector<int> MakeIA(const std::vector<LinkInfo> &edges, int ownVertices) const; // формирование массива IA
     std::vector<int> MakeJA(const std::vector<LinkInfo> &edges, const std::vector<int> ia, int ownVertices, std::unordered_map<int, int> &global2local) const; // формирование массива JA
 
-    void PrintEdges(const std::vector<LinkInfo> &edges, int ownVertices) const; // вывод рёбер
-    void PrintArray(const std::vector<int> array, const char *message) const; // вывод массива
+    void PrintEdges(std::ofstream &fout, const std::vector<LinkInfo> &edges, int ownVertices) const; // вывод рёбер
+    void PrintArray(std::ofstream &fout, const std::vector<int> array, const char *message) const; // вывод массива
     void PrintDebug(const Graph& graph, const std::vector<LinkInfo> &edges, int id, int i_start, int i_end, int j_start, int j_end) const; // вывод отладки
 public:
-    GraphGenerator(std::ofstream &fout, TaskParams params);
+    GraphGenerator(TaskParams params);
 
     Graph Generate(int id);
 };

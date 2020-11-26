@@ -128,7 +128,7 @@ std::vector<int> GraphGenerator::MakeJA(const std::vector<LinkInfo> &edges, cons
 }
 
 // вывод рёбер
-void GraphGenerator::PrintEdges(const std::vector<LinkInfo> &edges, int ownVertices) const {
+void GraphGenerator::PrintEdges(std::ofstream &fout, const std::vector<LinkInfo> &edges, int ownVertices) const {
     fout << "Edges list: " << std::endl;
 
     for (int i = 0; i < ownVertices; i++) {
@@ -142,7 +142,7 @@ void GraphGenerator::PrintEdges(const std::vector<LinkInfo> &edges, int ownVerti
 }
 
 // вывод массива
-void GraphGenerator::PrintArray(const std::vector<int> array, const char *message) const {
+void GraphGenerator::PrintArray(std::ofstream &fout, const std::vector<int> array, const char *message) const {
     fout << message << ": [ ";
 
     for (size_t i = 0; i < array.size(); i++)
@@ -153,6 +153,8 @@ void GraphGenerator::PrintArray(const std::vector<int> array, const char *messag
 
 // вывод отладки
 void GraphGenerator::PrintDebug(const Graph& graph, const std::vector<LinkInfo> &edges, int id, int i_start, int i_end, int j_start, int j_end) const {
+    std::ofstream fout("log/" + std::to_string(id) + ".txt", std::ios::app);
+
     fout << "P" << id << ": " << std::endl;
     fout << "rows: [" << i_start << ", " << i_end << ")" << std::endl;
     fout << "columns: [" << j_start << ", " << j_end << "), " << std::endl;
@@ -165,16 +167,17 @@ void GraphGenerator::PrintDebug(const Graph& graph, const std::vector<LinkInfo> 
     for (int i = 0; i < graph.ia[graph.ownVertices]; i++)
         jag[i] = graph.l2g[graph.ja[i]];
 
-    PrintArray(graph.l2g, "L2G");
-    PrintArray(graph.part, "Part");
-    PrintArray(graph.ia, "IA");
-    PrintArray(graph.ja, "JA");
-    PrintArray(jag, "JA (GLOBAL)");
-    PrintEdges(edges, graph.ownVertices);
+    PrintArray(fout, graph.l2g, "L2G");
+    PrintArray(fout, graph.part, "Part");
+    PrintArray(fout, graph.ia, "IA");
+    PrintArray(fout, graph.ja, "JA");
+    PrintArray(fout, jag, "JA (GLOBAL)");
+    PrintEdges(fout, edges, graph.ownVertices);
     fout << std::endl;
+    fout.close();
 }
 
-GraphGenerator::GraphGenerator(std::ofstream &fout, TaskParams params) : fout(fout) {
+GraphGenerator::GraphGenerator(TaskParams params) {
     this->nx = params.nx;
     this->ny = params.ny;
 
@@ -299,6 +302,7 @@ Graph GraphGenerator::Generate(int id) {
     graph.ownVertices = GetOwnVerticesCount(i_start, i_end, j_start, j_end); // количество собственных вершин в области
     graph.haloVertices = GetHaloVerices(i_start, i_end, j_start, j_end); // количество HALO вершин в области
     graph.totalVertices = graph.ownVertices + graph.haloVertices; // считаем общее количество вершин
+    graph.id = id; // запоминаем номер процесса
 
     // формируем отображение локальный вершин в глобальные и заполняем part
     graph.l2g = std::vector<int>(graph.totalVertices);
