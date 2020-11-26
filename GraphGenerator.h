@@ -14,14 +14,11 @@ struct LinkInfo {
 };
 
 class GraphGenerator {
-    int nx;
-    int ny;
-    int k1;
-    int k2;
-    int px;
-    int py;
-    bool debug;
-    std::ofstream &fout;
+    int nx, ny; // размеры сетки
+    int k1, k2; // параметры разбиения
+    int px, py; // количество ращбиений на процессы
+    bool debug; // нужна ли отладка
+    std::ofstream &fout; // лог файл
 
     bool IsTriangleVertex(int v) const; // проверка, что вершина треугольная
     bool IsUpVertex(int v) const; // проверка, что треугольная вершина сверху
@@ -39,7 +36,8 @@ class GraphGenerator {
     void GenerateOwnVertices(int id, int i_start, int i_end, int j_start, int j_end, int &local, std::vector<int> &l2g, std::vector<int> &part); // формирование собственных вершин
     void GenerateHaloVertices(int id, int i_start, int i_end, int j_start, int j_end, int &local, std::vector<int> &l2g, std::vector<int> &part); // формирование HALO вершин
 
-    std::vector<LinkInfo> MakeEdges(int ownVertices, const std::vector<int> &l2g) const; // формирование рёбер для вершины v
+    LinkInfo MakeEdgesForVertex(int vertex) const; // формирование ребёр для вершины vertex
+    std::vector<LinkInfo> MakeEdges(int ownVertices, const std::vector<int> &l2g) const; // формирование рёбер
     std::vector<int> MakeIA(const std::vector<LinkInfo> &edges, int ownVertices) const; // формирование массива IA
     std::vector<int> MakeJA(const std::vector<LinkInfo> &edges, const std::vector<int> ia, int ownVertices, std::unordered_map<int, int> &global2local) const; // формирование массива JA
 

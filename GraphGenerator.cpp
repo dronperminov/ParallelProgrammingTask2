@@ -59,42 +59,48 @@ int GraphGenerator::Process2StartColumn(int idx) const {
     return idx * (nx / px) + std::min(idx, nx % px);
 }
 
+// формирование ребёр для вершины v
+LinkInfo GraphGenerator::MakeEdgesForVertex(int v) const {
+    LinkInfo edges;
+    int index = Vertex2Index(v);
+    int x = index % nx;
+    int y = index / nx;
+
+    edges.count = 0;
+
+    // соседняя сверху, если не нижнетреугольная ячейка
+    if (y > 0 && !IsDownVertex(v))
+        edges.vertices[edges.count++] = Index2Vertex((y - 1) * nx + x);
+
+    // соседняя слева
+    if (x > 0 || (x == 0 && IsUpVertex(v)))
+        edges.vertices[edges.count++] = v - 1;
+
+    edges.vertices[edges.count++] = v;
+
+    // соседняя справа
+    if (x < nx - 1 || (x == nx - 1 && IsDownVertex(v)))
+        edges.vertices[edges.count++] = v + 1;
+
+    // соседняя снизу, если не верхнетреугольная ячейка
+    if (y < ny - 1 && !IsUpVertex(v)) {
+        int vertex = Index2Vertex((y + 1) * nx + x);
+
+        if (IsTriangleVertex(vertex))
+            vertex++;
+
+        edges.vertices[edges.count++] = vertex;
+    }
+
+    return edges;
+}
+
 // формирование рёбер
 std::vector<LinkInfo> GraphGenerator::MakeEdges(int ownVertices, const std::vector<int> &l2g) const {
     std::vector<LinkInfo> edges(ownVertices);
 
-    for (int i = 0; i < ownVertices; i++) {
-        int v = l2g[i];
-        int index = Vertex2Index(v);
-        int x = index % nx;
-        int y = index / nx;
-
-        edges[i].count = 0;
-
-        // соседняя сверху, если не нижнетреугольная ячейка
-        if (y > 0 && !IsDownVertex(v))
-            edges[i].vertices[edges[i].count++] = Index2Vertex((y - 1) * nx + x);
-
-        // соседняя слева
-        if (x > 0 || (x == 0 && IsUpVertex(v)))
-            edges[i].vertices[edges[i].count++] = v - 1;
-
-        edges[i].vertices[edges[i].count++] = v;
-
-        // соседняя справа
-        if (x < nx - 1 || (x == nx - 1 && IsDownVertex(v)))
-            edges[i].vertices[edges[i].count++] = v + 1;
-
-        // соседняя снизу, если не верхнетреугольная ячейка
-        if (y < ny - 1 && !IsUpVertex(v)) {
-            int vertex = Index2Vertex((y + 1) * nx + x);
-
-            if (IsTriangleVertex(vertex))
-                vertex++;
-
-            edges[i].vertices[edges[i].count++] = vertex;
-        }
-    }
+    for (int i = 0; i < ownVertices; i++)
+        edges[i] = MakeEdgesForVertex(l2g[i]);
 
     return edges;
 }
