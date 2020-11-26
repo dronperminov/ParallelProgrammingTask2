@@ -151,6 +151,8 @@ Grid.prototype.GetHaloVericesInArea = function(i_start, i_end, j_start, j_end) {
 }
 
 Grid.prototype.GetAreaInfo = function(id) {
+    let processCount = this.px * this.py
+
     let idx = id % this.px;
     let idy = Math.floor(id / this.px);
 
@@ -280,6 +282,43 @@ Grid.prototype.GetAreaInfo = function(id) {
     for (let i = 0; i < totalVertices; i++)
         b[i] = this.Fb(l2g[i]);
 
+    sendToProcess = []
+    recvFromProcess = []
+
+    for (let i = 0; i < processCount; i++) {
+        sendToProcess[i] = []
+        recvFromProcess[i] = []
+    }
+
+    for (let i = 0; i < ownVertices; i++) {
+        for (let index = ia[i]; index < ia[i + 1]; index++) {
+            if (ja[index] >= ownVertices) {
+                sendToProcess[part[ja[index]]].push(i);
+                recvFromProcess[part[ja[index]]].push(ja[index]);
+            }
+        }
+    }
+
+    neighbours = []
+    sendOffset = [0]
+    recvOffset = [0]
+    send = []
+    recv = []
+
+    for (let p = 0; p < processCount; p++) {
+        if (sendToProcess[p].length == 0)
+            continue
+
+        neighbours.push(p)
+        for (let i = 0; i < sendToProcess[p].length; i++) {
+            send.push(sendToProcess[p][i]);
+            recv.push(recvFromProcess[p][i]);
+        }
+
+        sendOffset.push(send.length);
+        recvOffset.push(recv.length);
+    }
+
     return {
         ownVertices: ownVertices,
         haloVertices: haloVertices,
@@ -292,7 +331,15 @@ Grid.prototype.GetAreaInfo = function(id) {
         ja: ja,
         jag: jag,
         a: a,
-        b: b
+        b: b,
+
+        sendToProcess: sendToProcess,
+        recvFromProcess: recvFromProcess,
+        neighbours: neighbours,
+        sendOffset: sendOffset,
+        recvOffset: recvOffset,
+        send: send,
+        recv: recv
     }
 }
 
@@ -467,6 +514,15 @@ Grid.prototype.MakeJA = function() {
             ja[index++] = this.edges[i][j]
 
     return ja
+}
+
+Grid.prototype.MakeGlobal = function(vec, l2g) {
+    let v = []
+
+    for (let i = 0; i < vec.length; i++)
+        v[i] = l2g[vec[i]]
+
+    return v
 }
 
 // формирование списка смежности
@@ -661,8 +717,9 @@ Grid.prototype.AddResults = function() {
     let ia = this.MakeIA()
     let ja = this.MakeJA()
     let filled = this.Fill(ia, ja)
+    let processCount = this.px * this.py
 
-    for (let id = 0; id < this.px * this.py; id++) {
+    for (let id = 0; id < processCount; id++) {
         let info = this.GetAreaInfo(id)
         let color = 'hsl(' + (360 * id / (this.px * this.py)) + ', 100%,90%)'
 
@@ -681,6 +738,22 @@ Grid.prototype.AddResults = function() {
         this.result.innerHTML += "<br><li>" + this.MakeList(info.edges, info.l2g, info.ownVertices) + "</li>"
 
         this.result.innerHTML += "<br><li>" + this.MakeFill(info.ia, info.ja, info.a, info.b, info.l2g) + "</li>"
+
+        for (let i = 0; i < processCount; i++) {
+            let sendToProcess = info.sendToProcess[i]
+            let recvFromProcess = info.recvFromProcess[i]
+
+            if (sendToProcess.length > 0) {
+                this.result.innerHTML += "<br><li><b>SendToProcess" + i + " (GLOBAL)</b>: [" + this.MakeGlobal(sendToProcess, info.l2g).join(", ") + "]</li>"
+                this.result.innerHTML += "<li><b>RecvFromProcess" + i + " (GLOBAL)</b>: [" + this.MakeGlobal(recvFromProcess, info.l2g).join(", ") + "]</li>"
+            }
+        }
+
+        this.result.innerHTML += "<br><li><b>Neighbours</b>: [" + info.neighbours.join(", ") + "]</li>"
+        this.result.innerHTML += "<li><b>Send</b>: [" + this.MakeGlobal(info.send, info.l2g).join(", ") + "]</li>"
+        this.result.innerHTML += "<li><b>SendOffset (GLOBAL)</b>: [" + info.sendOffset.join(", ") + "]</li>"
+        this.result.innerHTML += "<li><b>Recv</b>: [" + this.MakeGlobal(info.recv, info.l2g).join(", ") + "]</li>"
+        this.result.innerHTML += "<li><b>RecvOffset (GLOBAL)</b>: [" + info.recvOffset.join(", ") + "]</li>"
     }
 
     // if (document.getElementById("edge-list-box").checked)
