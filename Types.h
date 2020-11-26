@@ -20,6 +20,7 @@ struct TaskParams {
     int debug; // уровень отладки
 };
 
+// структура для графа
 struct Graph {
     int totalVertices; // общее количество вершин
     int haloVertices;
@@ -32,4 +33,13 @@ struct Graph {
     std::vector<int> ja;
     std::vector<double> a;
     std::vector<double> b;
+};
+
+// схема обменов
+struct Communication {
+    std::vector<int> neighbours;
+    std::vector<int> sendOffset;
+    std::vector<int> recvOffset;
+    std::vector<int> send;
+    std::vector<int> recv;
 };

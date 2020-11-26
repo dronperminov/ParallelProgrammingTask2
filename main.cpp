@@ -8,6 +8,7 @@
 #include "GraphGenerator.h"
 #include "GraphFiller.h"
 #include "CommunicationGenerator.h"
+#include "ConjugateGradientSolver.h"
 
 using namespace std;
 
@@ -81,6 +82,9 @@ void Solve(TaskParams params, int pid, int processCount) {
 
     CommunicationGenerator communicationGenerator(fout, processCount, params.debug == FULL_DEBUG);
     Communication communication = communicationGenerator.Build(graph);
+
+    ConjugateGradientSolver solver(fout, params.eps, params.debug);
+    Solvation solvation = solver.Solve(graph, communication);
 
     fout.close();
 }

@@ -5,15 +5,6 @@
 #include <vector>
 #include "Types.h"
 
-// схема обменов
-struct Communication {
-    std::vector<int> neighbours;
-    std::vector<int> sendOffset;
-    std::vector<int> recvOffset;
-    std::vector<int> send;
-    std::vector<int> recv;
-};
-
 class CommunicationGenerator {
     int processCount; // количество процессов
     bool debug; // нужна ли отладка
