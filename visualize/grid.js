@@ -9,8 +9,6 @@ const MIN_CELL_SIZE = 80
 const MIN_RADIUS = 12
 const MAX_RADIUS = 20
 
-const VARIANT_A1 = 'A1'
-const VARIANT_A2 = 'A2'
 const VARIANT_B1 = 'B1'
 const VARIANT_B2 = 'B2'
 
@@ -28,7 +26,7 @@ function Grid(canvas, nx, ny, k1, k2, px, py, eps, variant, result) {
     this.variant = variant
     this.result = result
 
-    this.padding = variant == VARIANT_A1 || variant == VARIANT_A2 ? 25 : 5
+    this.padding = 5
 
     let size = (window.innerWidth < 768 ? window.innerWidth : window.innerWidth / 2)
     this.cellSize = (size - 2 * this.padding) / nx
@@ -165,8 +163,8 @@ Grid.prototype.GetAreaInfo = function(id) {
 
     let ownVertices = this.GetOwnVerticesCountInArea(i_start, i_end, j_start, j_end); // количество собственных вершин в области
     let haloVertices = this.GetHaloVericesInArea(i_start, i_end, j_start, j_end); // количество HALO вершин в области
+    let totalVertices = ownVertices + haloVertices
 
-    g2l = []
     l2g = []
     part = []
 
@@ -176,12 +174,10 @@ Grid.prototype.GetAreaInfo = function(id) {
         for (let j = j_start; j < j_end; j++) {
             let vertex = this.Index2Vertex(i * this.nx + j);
 
-            g2l[local] = local;
             l2g[local] = vertex;
             part[local++] = id;
 
             if (this.IsTriangleVertex(vertex)) {
-                g2l[local] = local;
                 l2g[local] = vertex + 1;
                 part[local++] = id;                 
             }
@@ -197,7 +193,6 @@ Grid.prototype.GetAreaInfo = function(id) {
                     vertex++;
             }
 
-            g2l[local] = local;
             l2g[local] = vertex;
             part[local++] = id - this.px;
         }
@@ -210,7 +205,6 @@ Grid.prototype.GetAreaInfo = function(id) {
             if (this.IsTriangleVertex(vertex))
                 vertex++;
 
-            g2l[local] = local;
             l2g[local] = vertex;
             part[local++] = id - 1;
         }
@@ -218,7 +212,6 @@ Grid.prototype.GetAreaInfo = function(id) {
         if (j_end < this.nx) {
             let vertex = this.Index2Vertex(i * this.nx + j_end);
 
-            g2l[local] = local;
             l2g[local] = vertex;
             part[local++] = id + 1;
         }
@@ -233,24 +226,46 @@ Grid.prototype.GetAreaInfo = function(id) {
                     vertex++;
             }
 
-            g2l[local] = local;
             l2g[local] = vertex;
             part[local++] = id + this.px;
         }
     }
 
-    return { ownVertices: ownVertices, haloVertices: haloVertices, g2l: g2l, l2g: l2g, part: part }
-}
+    let global2local = {}
 
-// формирование вершин для варианта A
-Grid.prototype.MakeVericesVariantA = function() {
-    for (let i = 0; i <= this.ny; i++) {
-        for (let j = 0; j <= this.nx; j++) {
-            let x = this.padding + j * this.cellSize;
-            let y = this.padding + i * this.cellSize;
+    for (let i = 0; i < totalVertices; i++)
+        global2local[l2g[i]] = i
 
-            this.vertices.push({ x: x, y: y, id: i * (this.nx + 1) + j })
+    edges = []
+    ia = []
+    ia[0] = 0;
+
+    for (let i = 0; i < ownVertices; i++) {
+        edges[i] = this.MakeEdgesForVertex(l2g[i])
+        ia[i + 1] = ia[i] + edges[i].length;
+    }
+
+    ja = [];
+    jag = []
+
+    for (let i = 0; i < ownVertices; i++) {
+        for (let j = 0; j < edges[i].length; j++) {
+            ja[ia[i] + j] = global2local[edges[i][j]];
+            jag[ia[i] + j] = edges[i][j];
         }
+    }
+
+    return {
+        ownVertices: ownVertices,
+        haloVertices: haloVertices,
+        totalVertices: totalVertices,
+        l2g: l2g,
+        part: part,
+        global2local: global2local,
+        edges: edges,
+        ia: ia,
+        ja: ja,
+        jag: jag
     }
 }
 
@@ -293,9 +308,6 @@ Grid.prototype.MakeVerices = function() {
         }
     }
 
-    if (this.variant == VARIANT_A1 || this.variant == VARIANT_A2)
-        this.MakeVericesVariantA()
-
     this.result.innerHTML = "<b>Вариант:</b> " + this.variant
     this.result.innerHTML += "<br><b>Размер сетки:</b> " + this.nx + "x" + this.ny
     this.result.innerHTML += "<br><b>Параметры разбиения</b> " + this.k1 + ", " + this.k2
@@ -308,6 +320,8 @@ Grid.prototype.MakeVerices = function() {
 
 // формирование рёбер для заданной вершины для варианта B1
 Grid.prototype.MakeEdgesForVertexB1 = function(v, x, y) {
+    let edges = []
+
     if (y > 0 && !this.IsDownVertex(v)) {
         let vertex = this.Index2Vertex((y - 1) * this.nx + x);
 
@@ -315,38 +329,57 @@ Grid.prototype.MakeEdgesForVertexB1 = function(v, x, y) {
             vertex++;
 
         this.edges[v].push(vertex)
+        edges.push(vertex)
     }
 
     // соседняя слева
-    if (x > 0 || (x == 0 && this.IsDownVertex(v)))
+    if (x > 0 || (x == 0 && this.IsDownVertex(v))) {
         this.edges[v].push(v - 1)
+        edges.push(v - 1)
+    }
 
     this.edges[v].push(v)
+    edges.push(v)
 
     // соседняя справа
-    if (x < this.nx - 1 || (x == this.nx - 1 && this.IsUpVertex(v)))
+    if (x < this.nx - 1 || (x == this.nx - 1 && this.IsUpVertex(v))) {
         this.edges[v].push(v + 1)
+        edges.push(v + 1)
+    }
 
     // соседняя снизу, если не верхнетреугольная ячейка
-    if (y < this.ny - 1 && !this.IsUpVertex(v))
+    if (y < this.ny - 1 && !this.IsUpVertex(v)) {
         this.edges[v].push(this.Index2Vertex((y + 1) * this.nx + x))
+        edges.push(this.Index2Vertex((y + 1) * this.nx + x))
+    }
+
+    return edges
 }
 
 // формирование рёбер для заданной вершины для варианта B2
 Grid.prototype.MakeEdgesForVertexB2 = function(v, x, y) {
+    let edges = []
+
     // соседняя сверху, если не нижнетреугольная ячейка
-    if (y > 0 && !this.IsDownVertex(v))
+    if (y > 0 && !this.IsDownVertex(v)) {
         this.edges[v].push(this.Index2Vertex((y - 1) * this.nx + x))
+        edges.push(this.Index2Vertex((y - 1) * this.nx + x))
+    }
 
     // соседняя слева
-    if (x > 0 || (x == 0 && this.IsUpVertex(v)))
+    if (x > 0 || (x == 0 && this.IsUpVertex(v))) {
         this.edges[v].push(v - 1)
+        edges.push(v - 1)
+    }
 
     this.edges[v].push(v)
+    edges.push(v)
 
     // соседняя справа
-    if (x < this.nx - 1 || (x == this.nx - 1 && this.IsDownVertex(v)))
+    if (x < this.nx - 1 || (x == this.nx - 1 && this.IsDownVertex(v))) {
         this.edges[v].push(v + 1)
+        edges.push(v + 1)
+    }
 
     // соседняя снизу, если не верхнетреугольная ячейка
     if (y < this.ny - 1 && !this.IsUpVertex(v)) {
@@ -356,61 +389,24 @@ Grid.prototype.MakeEdgesForVertexB2 = function(v, x, y) {
             vertex++;
 
         this.edges[v].push(vertex)
+        edges.push(vertex)
     }
-}
 
-// формирование рёбер для заданной вершины для вариантов A
-Grid.prototype.MakeEdgesForVertexA = function(v) {
-    let dx = [ 0, -1, 0, 1, 0 ]
-    let dy = [ -1, 0, 0, 0, 1 ]
-    let vx = v % (this.nx + 1)
-    let vy = Math.floor(v / (this.nx + 1))
-
-    for (let k = 0; k < 5; k++) {
-        let x = vx + dx[k]
-        let y = vy + dy[k]
-
-        if (x < 0 || y < 0 || x > this.nx || y > this.ny)
-            continue
-
-        this.edges[v].push(y * (this.nx + 1) + x)
-    }
+    return edges
 }
 
 // формирование рёбер для заданной вершины для вариантов B
-Grid.prototype.MakeEdgesForVertexB = function(v) {
+Grid.prototype.MakeEdgesForVertex = function(v) {
     let index = this.Vertex2Index(v)
     let x = index % this.nx
     let y = Math.floor(index / this.nx)
 
     if (this.variant == VARIANT_B1) {
-        this.MakeEdgesForVertexB1(v, x, y)
+        return this.MakeEdgesForVertexB1(v, x, y)
     }
     else if (this.variant == VARIANT_B2) {
-        this.MakeEdgesForVertexB2(v, x, y)
+        return this.MakeEdgesForVertexB2(v, x, y)
     }
-}
-
-// добавление диагональных элементов для варианта А
-Grid.prototype.AddDiagonalsForA = function() {
-    for (let index = this.k1; index < this.nx * this.ny; index += this.k1 + this.k2) {
-        for (let k = 0; k < this.k2 && index + k < this.nx * this.ny; k++) {
-            let i = Math.floor((index + k) / this.nx)
-            let j = (index + k) % this.nx
-
-            if (this.variant == VARIANT_A1) {
-                this.edges[i * (this.nx + 1) + j + 1].push((i + 1) * (this.nx + 1) + j)
-                this.edges[(i + 1) * (this.nx + 1) + j].push(i * (this.nx + 1) + j + 1)
-            }
-            else {
-                this.edges[i * (this.nx + 1) + j].push((i + 1) * (this.nx + 1) + j + 1)
-                this.edges[(i + 1) * (this.nx + 1) + j + 1].push(i * (this.nx + 1) + j)
-            }
-        }
-    }
-
-    for (let v = 0; v < this.vertices.length; v++)
-        this.edges[v].sort(function(a, b) { return a - b })
 }
 
 // формирование рбер
@@ -419,17 +415,8 @@ Grid.prototype.MakeEdges = function() {
 
     for (let v = 0; v < this.vertices.length; v++) {
         this.edges[v] = []
-
-        if (this.variant == VARIANT_A1 || this.variant == VARIANT_A2) {
-            this.MakeEdgesForVertexA(v)
-        }
-        else if (this.variant == VARIANT_B1 || this.variant == VARIANT_B2) {
-            this.MakeEdgesForVertexB(v)
-        }
+        this.MakeEdgesForVertex(v)
     }
-
-    if (this.variant == VARIANT_A1 || this.variant == VARIANT_A2)
-        this.AddDiagonalsForA()
 }
 
 // формирование массива IA
@@ -456,11 +443,11 @@ Grid.prototype.MakeJA = function() {
 }
 
 // формирование списка смежности
-Grid.prototype.MakeList = function() {
-    let list = "<br><b>Список смежности:</b><br>"
+Grid.prototype.MakeList = function(edges, l2g, ownVertices) {
+    let list = "<b>Список смежности:</b><br>"
 
-    for (let i = 0; i < this.edges.length; i++)
-        list += "<b>" + i + "</b>&rarr;[" + this.edges[i].join(", ") + "]<br>"
+    for (let i = 0; i < ownVertices; i++)
+        list += "<b style='margin-left: 22px'>" + i + " (" + l2g[i] + ")</b>&rarr;[" + edges[i].join(", ") + "]<br>"
 
     return list
 }
@@ -604,7 +591,7 @@ Grid.prototype.DrawGrid = function() {
             let x = this.padding + ((index + k) % this.nx) * this.cellSize
             let y = this.padding + Math.floor((index + k) / this.nx) * this.cellSize
 
-            if (this.variant == VARIANT_A1 || this.variant == VARIANT_B1) {
+            if (this.variant == VARIANT_B1) {
                 this.DrawLine(x + this.cellSize, y, x, y + this.cellSize)
             }
             else {
@@ -649,14 +636,16 @@ Grid.prototype.AddResults = function() {
         this.result.innerHTML += "<h3 style='margin-bottom: 0; background:" + color + "'>Процесс P" + id + ":</h3><ul style='margin: 0; padding: 0'>"
         this.result.innerHTML += "<li><b>OWN</b>: " + info.ownVertices + "</li>"
         this.result.innerHTML += "<li><b>HALO</b>: " + info.haloVertices + "</li>"
-        this.result.innerHTML += "<li><b>G2L</b>: [" + info.g2l.join(", ") + "]</li>"
         this.result.innerHTML += "<li><b>L2G</b>: [" + info.l2g.join(", ") + "]</li>"
         this.result.innerHTML += "<li><b>Part</b>: [" + info.part.join(", ") + "]</li>"
+        this.result.innerHTML += "<li><b>IA</b>: [" + info.ia.join(", ") + "]</li>"
+        this.result.innerHTML += "<li><b>JA</b>: [" + info.ja.join(", ") + "]</li>"
+        this.result.innerHTML += "<li><b>JA (GLOBAL)</b>: [" + info.jag.join(", ") + "]</li>"
+        this.result.innerHTML += "<li>" + this.MakeList(info.edges, info.l2g, info.ownVertices) + "</li>"
         this.result.innerHTML += "</ul></p>"
     }
 
     // if (document.getElementById("edge-list-box").checked)
-    //     this.result.innerHTML += this.MakeList()
 
     // if (document.getElementById("portrait-box").checked) {
     //     this.result.innerHTML += "<br><b>IA:</b> [" + ia.join(", ") + "]"
@@ -678,21 +667,5 @@ Grid.prototype.Draw = function() {
     this.DrawGrid()
     this.DrawEdges()
     this.DrawVertices()
-
-    for (let id = 0; id < this.px * this.py; id++) {
-        let info = this.GetAreaInfo(id)
-
-        let x = this.padding + this.Process2StartColumn(id % this.px) * this.cellSize
-        let y = this.padding + this.Process2StartRow(Math.floor(id / this.px)) * this.cellSize
-
-        this.ctx.fillStyle = '#000'
-        this.ctx.textAlign = 'left'
-        this.ctx.font = '10px arial'
-        this.ctx.fillText("OWN:" + info.ownVertices + ", HALO:" + info.haloVertices + ", N:" + (info.ownVertices + info.haloVertices), x + 10, y + 12)
-        this.ctx.fillText("G2L: [" + info.g2l.join(" ") + "]", x + 10, y + 24)
-        this.ctx.fillText("L2G: [" + info.l2g.join(" ") + "]", x + 10, y + 36)
-        this.ctx.fillText("PART: [" + info.l2g.join(" ") + "]", x + 10, y + 48)
-    }
-
     this.AddResults()
 }
