@@ -1,6 +1,6 @@
 #include "GraphFiller.h"
 
-GraphFiller::GraphFiller(int totalVertices, int ownVertices, int *ia, int *ja, int *l2g, bool debug) {
+GraphFiller::GraphFiller(std::ofstream &fout, int totalVertices, int ownVertices, int *ia, int *ja, int *l2g, bool debug) : fout(fout) {
     this->totalVertices = totalVertices;
     this->ownVertices = ownVertices;
     this->ia = ia;
@@ -12,18 +12,18 @@ GraphFiller::GraphFiller(int totalVertices, int ownVertices, int *ia, int *ja, i
 
 // вывод отладочных значений
 void GraphFiller::PrintDebug(double *a, double *b) const {
-    std::cout << "    Filled values: A b" << std::endl;
+    fout << "Filled values: A b" << std::endl;
 
     for (int i = 0; i < ownVertices; i++) {
-        std::cout << "      " << i << ": ";
+        fout << "  " << i << ": ";
 
         for (int j = ia[i]; j < ia[i + 1]; j++)
-            std::cout << std::left << std::setw(12) << a[j] << " ";
+            fout << std::left << std::setw(12) << a[j] << " ";
 
-        std::cout << " = " << b[i] << "" << std::endl;
+        fout << " = " << b[i] << "" << std::endl;
     }
 
-    std::cout << std::endl;
+    fout << std::endl;
 }
 
 // заполнение

@@ -80,10 +80,10 @@ int GraphGenerator::GetVerticesCount() const {
     }
 
     if (debug) {
-        std::cout << std::endl;
-        std::cout << "Rectangles count: " << rectangles << std::endl;
-        std::cout << "Triangles count: " << triangles << std::endl;
-        std::cout << "Vertices count: " << n << std::endl;
+        fout << std::endl;
+        fout << "Rectangles count: " << rectangles << std::endl;
+        fout << "Triangles count: " << triangles << std::endl;
+        fout << "Vertices count: " << n << std::endl;
     }
 
     return n;
@@ -142,29 +142,29 @@ int* GraphGenerator::MakeIA(LinkInfo *edges, int ownVertices) const {
 
 // вывод рёбер
 void GraphGenerator::PrintEdges(LinkInfo *edges, int ownVertices) const {
-    std::cout << "    Edges list: " << std::endl;
+    fout << "Edges list: " << std::endl;
 
     for (int i = 0; i < ownVertices; i++) {
-        std::cout << "      " << i << " -> [ ";
+        fout << "      " << i << " -> [ ";
 
         for (int j = 0; j < edges[i].count; j++)
-            std::cout << edges[i].vertices[j] << " ";
+            fout << edges[i].vertices[j] << " ";
 
-        std::cout << "]" << std::endl;
+        fout << "]" << std::endl;
     }
 }
 
 // вывод массива
 void GraphGenerator::PrintArray(int *array, int n, const char *message) const {
-    std::cout << message << ": [ ";
+    fout << message << ": [ ";
 
     for (int i = 0; i < n; i++)
-        std::cout << array[i] << " ";
+        fout << array[i] << " ";
 
-    std::cout << "]" << std::endl;
+    fout << "]" << std::endl;
 }
 
-GraphGenerator::GraphGenerator(int nx, int ny, int k1, int k2, int px, int py, bool debug) {
+GraphGenerator::GraphGenerator(std::ofstream &fout, int nx, int ny, int k1, int k2, int px, int py, bool debug) : fout(fout) {
     this->nx = nx;
     this->ny = ny;
 
@@ -289,12 +289,12 @@ int GraphGenerator::Generate(int id, int &totalVertices, int &ownVertices, int *
     totalVertices = ownVertices + haloVertices;
 
     if (debug) {
-        std::cout << "P" << id << ": " << std::endl;
-        std::cout << "    rows: [" << i_start << ", " << i_end << ")" << std::endl;
-        std::cout << "    columns: [" << j_start << ", " << j_end << "), " << std::endl;
-        std::cout << "    OWN vertices (No): " << ownVertices << std::endl;
-        std::cout << "    HALO vertices: " << haloVertices << std::endl;
-        std::cout << "    TOTAL vertices (N): " << totalVertices << std::endl;
+        fout << "P" << id << ": " << std::endl;
+        fout << "rows: [" << i_start << ", " << i_end << ")" << std::endl;
+        fout << "columns: [" << j_start << ", " << j_end << "), " << std::endl;
+        fout << "OWN vertices (No): " << ownVertices << std::endl;
+        fout << "HALO vertices: " << haloVertices << std::endl;
+        fout << "TOTAL vertices (N): " << totalVertices << std::endl;
     }
 
     l2g = new int[totalVertices];
@@ -323,13 +323,13 @@ int GraphGenerator::Generate(int id, int &totalVertices, int &ownVertices, int *
         for (int i = 0; i < ia[ownVertices]; i++)
             jag[i] = l2g[ja[i]];
 
-        PrintArray(l2g, totalVertices, "    L2G");
-        PrintArray(part, totalVertices, "    Part");
-        PrintArray(ia, ownVertices + 1, "    IA");
-        PrintArray(ja, ia[ownVertices], "    JA");
-        PrintArray(jag, ia[ownVertices], "    JA (GLOBAL)");
+        PrintArray(l2g, totalVertices, "L2G");
+        PrintArray(part, totalVertices, "Part");
+        PrintArray(ia, ownVertices + 1, "IA");
+        PrintArray(ja, ia[ownVertices], "JA");
+        PrintArray(jag, ia[ownVertices], "JA (GLOBAL)");
         PrintEdges(edges, ownVertices);
-        std::cout << std::endl;
+        fout << std::endl;
     }
 
     return 0; // возвращаем время

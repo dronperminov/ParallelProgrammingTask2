@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 #include <cmath>
 #include "Types.h"
@@ -24,10 +25,11 @@ class GraphFiller {
     int *ja;
     int *l2g;
     bool debug; // нужна ли отладка
+    std::ofstream &fout;
 
     void PrintDebug(double *a, double *b) const; // вывод отладочных значений
 public:
-    GraphFiller(int totalVertices, int ownVertices, int *ia, int *ja, int *l2g, bool debug);
+    GraphFiller(std::ofstream &fout, int totalVertices, int ownVertices, int *ia, int *ja, int *l2g, bool debug);
 
     void Fill(double *&a, double *&b) const; // заполнение
 };

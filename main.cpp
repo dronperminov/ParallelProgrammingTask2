@@ -1,11 +1,13 @@
 #include <iostream>
 #include <fstream>
 #include <cstring>
+#include <string>
 #include <mpi.h>
 
 #include "ArgumentParser.h"
 #include "GraphGenerator.h"
 #include "GraphFiller.h"
+#include "CommunicationGenerator.h"
 
 using namespace std;
 
@@ -68,7 +70,7 @@ bool CheckHelp(int argc, char **argv, int pid) {
     return false;
 }
 
-void Solve(const ArgumentParser& parser, int pid) {
+void Solve(const ArgumentParser& parser, int pid, int processCount) {
     // входные аргументы
     int nx = parser.GetNx();
     int ny = parser.GetNy();
@@ -89,11 +91,18 @@ void Solve(const ArgumentParser& parser, int pid) {
     double *a = NULL;
     double *b = NULL;
 
-    GraphGenerator generator(nx, ny, k1, k2, px, py, debug == FULL_DEBUG);
-    generator.Generate(pid, totalVertices, ownVertices, ia, ja, l2g, part); // запускаем генерацию
+    ofstream fout("log/" + to_string(pid) + ".txt"); // создаём лог файл для данного процесса
 
-    GraphFiller filler(ownVertices, ia, ja, l2g, debug == FULL_DEBUG);
-    filler.Fill(a, b);
+    GraphGenerator graphGenerator(fout, nx, ny, k1, k2, px, py, debug == FULL_DEBUG);
+    graphGenerator.Generate(pid, totalVertices, ownVertices, ia, ja, l2g, part); // запускаем генерацию
+
+    GraphFiller graphFiller(fout, totalVertices, ownVertices, ia, ja, l2g, debug == FULL_DEBUG);
+    graphFiller.Fill(a, b);
+
+    CommunicationGenerator communicationGenerator(fout, totalVertices, ownVertices, ia, ja, part, l2g, processCount, debug == FULL_DEBUG);
+    Communication communication = communicationGenerator.Build();
+
+    fout.close();
 
     // освобождаем выделенную память
     delete[] ia;
@@ -125,5 +134,5 @@ int main(int argc, char **argv) {
     if (parser.GetDebug() == FULL_DEBUG && pid == 0)
         parser.PrintArguments();
 
-    Solve(parser, pid);
+    Solve(parser, pid, processCount);
 }

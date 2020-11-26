@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 #include <unordered_map>
 #include <omp.h>
@@ -19,6 +20,7 @@ class GraphGenerator {
     int px;
     int py;
     bool debug;
+    std::ofstream &fout;
 
     bool IsTriangleVertex(int v) const; // проверка, что вершина треугольная
     bool IsUpVertex(int v) const; // проверка, что треугольная вершина сверху
@@ -43,7 +45,7 @@ class GraphGenerator {
     void PrintEdges(LinkInfo *edges, int ownVertices) const; // вывод рёбер
     void PrintArray(int *array, int n, const char *message) const; // вывод массива
 public:
-    GraphGenerator(int nx, int ny, int k1, int k2, int px, int py, bool debug);
+    GraphGenerator(std::ofstream &fout, int nx, int ny, int k1, int k2, int px, int py, bool debug);
 
     int Generate(int id, int &totalVertices, int &ownVertices, int *&ia, int *&ja, int *&l2g, int *&part);
 };
