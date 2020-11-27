@@ -277,10 +277,8 @@ Grid.prototype.GetAreaInfo = function(id) {
         }
 
         a[diagIndex] = 1.234 * sum;
-    }
-
-    for (let i = 0; i < totalVertices; i++)
         b[i] = this.Fb(l2g[i]);
+    }
 
     sendToProcess = []
     recvFromProcess = []
