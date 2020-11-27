@@ -29,6 +29,7 @@ class GraphGenerator {
     int Process2StartRow(int idy) const; // номер процесса в строку начала области
     int Process2StartColumn(int idx) const; // номер процесса в столбце начала области
 
+    int GetGlobalVerticesCount() const; // вычисление количества вершин в сетке
     int GetOwnVerticesCount(int i_start, int i_end, int j_start, int j_end) const; // количество собственных вершин в области
     int GetHaloVerices(int i_start, int i_end, int j_start, int j_end) const; // количество HALO вершин в области
 

@@ -23,6 +23,7 @@ struct TaskParams {
 
 // структура для графа
 struct Graph {
+    int globalVertices; // глобальнео количество вершин в сетке
     int totalVertices; // общее количество вершин
     int haloVertices;
     int ownVertices; // количество своих вершин

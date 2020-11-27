@@ -190,6 +190,18 @@ GraphGenerator::GraphGenerator(TaskParams params) {
     this->debug = params.debug == FULL_DEBUG;
 }
 
+// вычисление количества вершин в сетке
+int GraphGenerator::GetGlobalVerticesCount() const {
+    int totalCells = nx * ny; // общее количество ячеек без деления
+    int intPart = totalCells / (k1 + k2); // полноценно разбиваемая часть ячеек
+    int modPart = totalCells % (k1 + k2); // сколько ячеек останется после целого разбиения
+
+    int n1 = modPart > k1 ? k1 : modPart; // количество клеток без разбиения
+    int n2 = modPart - n1; // количество клеток с разбиением
+
+    return intPart * (k1 + 2 * k2) + n1 + n2 * 2;
+}
+
 // количество вершин в области
 int GraphGenerator::GetOwnVerticesCount(int i_start, int i_end, int j_start, int j_end) const {
     int vertices = 0;
@@ -299,6 +311,7 @@ Graph GraphGenerator::Generate(int id) {
 
     Graph graph; // создаём граф
 
+    graph.globalVertices = GetGlobalVerticesCount(); // получаем количество вершин на всей сетке
     graph.ownVertices = GetOwnVerticesCount(i_start, i_end, j_start, j_end); // количество собственных вершин в области
     graph.haloVertices = GetHaloVerices(i_start, i_end, j_start, j_end); // количество HALO вершин в области
     graph.totalVertices = graph.ownVertices + graph.haloVertices; // считаем общее количество вершин

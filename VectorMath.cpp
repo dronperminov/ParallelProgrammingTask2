@@ -9,8 +9,7 @@ double Dot(const std::vector<double> &x, const std::vector<double> &y, int n) {
     }
 
     double dot = 0;
-    MPI_Reduce(&sum, &dot, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&dot, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Allreduce(&sum, &dot, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
     return dot;
 }

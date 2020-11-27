@@ -25,7 +25,7 @@ void GraphFiller::PrintDebug(const Graph& graph) const {
 // заполнение
 void GraphFiller::Fill(Graph &graph) const {
     graph.a = std::vector<double>(graph.ia[graph.ownVertices]);
-    graph.b = std::vector<double>(graph.totalVertices);
+    graph.b = std::vector<double>(graph.ownVertices);
 
     for (int i = 0; i < graph.ownVertices; i++) {
         double sum = 0;
@@ -44,10 +44,8 @@ void GraphFiller::Fill(Graph &graph) const {
         }
 
         graph.a[diagIndex] = DIAGONAL_DOMINANCE_COEFFICIENT * sum;
-    }
-
-    for (int i = 0; i < graph.totalVertices; i++)
         graph.b[i] = Fb(graph.l2g[i]);
+    }
 
     if (debug) {
         PrintDebug(graph);
