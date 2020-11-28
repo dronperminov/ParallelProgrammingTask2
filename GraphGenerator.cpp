@@ -152,10 +152,11 @@ void GraphGenerator::PrintArray(std::ofstream &fout, const std::vector<int> arra
 }
 
 // вывод отладки
-void GraphGenerator::PrintDebug(const Graph& graph, const std::vector<LinkInfo> &edges, int id, int i_start, int i_end, int j_start, int j_end) const {
-    std::ofstream fout("log/" + std::to_string(id) + ".txt", std::ios::app);
+void GraphGenerator::PrintDebug(const Graph& graph, const std::vector<LinkInfo> &edges, int id, int i_start, int i_end, int j_start, int j_end, double time) const {
+    std::ofstream fout("log/" + std::to_string(id) + ".txt");
 
     fout << "P" << id << ": " << std::endl;
+    fout << "Generation time: " << time << "ms" << std::endl;
     fout << "rows: [" << i_start << ", " << i_end << ")" << std::endl;
     fout << "columns: [" << j_start << ", " << j_end << "), " << std::endl;
     fout << "OWN vertices (No): " << graph.ownVertices << std::endl;
@@ -298,6 +299,8 @@ void GraphGenerator::GenerateHaloVertices(int id, int i_start, int i_end, int j_
 }
 
 Graph GraphGenerator::Generate(int id) {
+    TimePoint t0 = Time::now();
+
     int idx = id % px;
     int idy = id / px;
 
@@ -334,8 +337,18 @@ Graph GraphGenerator::Generate(int id) {
     graph.ia = MakeIA(edges, graph.ownVertices); // формируем портрет матрицы смежности
     graph.ja = MakeJA(edges, graph.ia, graph.ownVertices, global2local); // формируем портрет матрицы смежности
 
+    TimePoint t1 = Time::now();
+    double time = std::chrono::duration_cast<ms>(t1 - t0).count(); // вычисляем разницу времени
+
+    double generationTime = 0;
+    MPI_Allreduce(&time, &generationTime, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+
+    if (graph.id == 0) {
+        std::cout << "Generation time: " << generationTime << " ms" << std::endl;
+    }
+
     if (debug) {
-        PrintDebug(graph, edges, id, i_start, i_end, j_start, j_end);
+        PrintDebug(graph, edges, id, i_start, i_end, j_start, j_end, time);
     }
 
     return graph; // возвращаем граф

@@ -106,12 +106,15 @@ void Solve(TaskParams params, int pid, int processCount) {
     vector<double> x = JoinPartialSolvation(graph, solvation, processCount); // объединяем решения
 
     if (pid == 0) {
-        cout << "Solvation: [ ";
+        if (params.debug != NO_DEBUG) {
+            cout << "Solvation: [ ";
 
-        for (size_t i = 0; i < graph.globalVertices; i++)
-            cout << x[i] << " ";
+            for (size_t i = 0; i < graph.globalVertices; i++)
+                cout << x[i] << " ";
 
-        cout << "]" << endl;
+            cout << "]" << endl;
+        }
+
         cout << "Residual: " << solvation.res << endl;
         cout << "Iterations: " << solvation.iterations << endl;
     }

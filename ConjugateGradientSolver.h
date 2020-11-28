@@ -21,7 +21,7 @@ class ConjugateGradientSolver {
     double GetResidualNorm(const Graph &graph, const Communication &communication, std::vector<double> &x, std::vector<double> &r) const; // получение нормы невязки
     void InitValues(const Graph &graph, std::vector<double> &x, std::vector<double> &r, std::vector<double> &m) const; // инициализация начальных значений
     void PrintVector(std::ofstream &fout, const std::vector<double> &x) const; // вывод вектора
-    void PrintDebug(const Solvation &solvation, const std::vector<double> &norms, const std::vector<double> &rho, int id) const; // вывод отладки
+    void PrintDebug(const Solvation &solvation, const std::vector<double> &norms, const std::vector<double> &rho, int id, double time) const; // вывод отладки
 public:
     ConjugateGradientSolver(double eps, int debug);
 

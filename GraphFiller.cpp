@@ -5,8 +5,10 @@ GraphFiller::GraphFiller(bool debug) {
 }
 
 // вывод отладочных значений
-void GraphFiller::PrintDebug(const Graph& graph) const {
+void GraphFiller::PrintDebug(const Graph& graph, double time) const {
     std::ofstream fout("log/" + std::to_string(graph.id) + ".txt", std::ios::app);
+
+    fout << "Fill time: " << time << "ms" << std::endl;
     fout << "Filled values: A b" << std::endl;
 
     for (int i = 0; i < graph.ownVertices; i++) {
@@ -24,6 +26,7 @@ void GraphFiller::PrintDebug(const Graph& graph) const {
 
 // заполнение
 void GraphFiller::Fill(Graph &graph) const {
+    TimePoint t0 = Time::now();
     graph.a = std::vector<double>(graph.ia[graph.ownVertices]);
     graph.b = std::vector<double>(graph.ownVertices);
 
@@ -47,7 +50,17 @@ void GraphFiller::Fill(Graph &graph) const {
         graph.b[i] = Fb(graph.l2g[i]);
     }
 
+    TimePoint t1 = Time::now();
+    double time = std::chrono::duration_cast<ms>(t1 - t0).count(); // вычисляем разницу времени
+
+    double fillTime = 0;
+    MPI_Allreduce(&time, &fillTime, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+
+    if (graph.id == 0) {
+        std::cout << "Fill time: " << fillTime << " ms" << std::endl;
+    }
+
     if (debug) {
-        PrintDebug(graph);
+        PrintDebug(graph, time);
     }
 }

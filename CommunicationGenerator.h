@@ -11,7 +11,7 @@ class CommunicationGenerator {
 
     void PrintVector(std::ofstream &fout, const std::vector<int> &vector) const; // вывод вектора
     void PrintVector(std::ofstream &fout, const std::vector<int> &vector, const std::vector<int> &l2g) const; // вывод вектора с глобальными вершинами
-    void PrintDebug(const Graph &graph, const Communication &communication, std::vector<std::vector<int>> sendToProcess, std::vector<std::vector<int>> recvFromProcess) const; // вывод отладочной информации
+    void PrintDebug(const Graph &graph, const Communication &communication, std::vector<std::vector<int>> sendToProcess, std::vector<std::vector<int>> recvFromProcess, double time) const; // вывод отладочной информации
 public:
     CommunicationGenerator(int processCount, bool debug);
 

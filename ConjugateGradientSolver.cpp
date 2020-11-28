@@ -41,9 +41,10 @@ void ConjugateGradientSolver::PrintVector(std::ofstream &fout, const std::vector
 }
 
 // вывод отладки
-void ConjugateGradientSolver::PrintDebug(const Solvation &solvation, const std::vector<double> &norms, const std::vector<double> &rho, int id) const {
+void ConjugateGradientSolver::PrintDebug(const Solvation &solvation, const std::vector<double> &norms, const std::vector<double> &rho, int id, double time) const {
     std::ofstream fout("log/" + std::to_string(id) + ".txt", std::ios::app);
 
+    fout << "Solve time: " << time << "ms" << std::endl;
     for (int i = 0; i < solvation.iterations; i++)
         fout << "Iteration " << i << ", |b - Ax|: " << norms[i] << ", rho: " << rho[i] << std::endl;
 
@@ -53,6 +54,8 @@ void ConjugateGradientSolver::PrintDebug(const Solvation &solvation, const std::
 
 // решение системы
 Solvation ConjugateGradientSolver::Solve(const Graph &graph, const Communication &communication) {
+    TimePoint t0 = Time::now();
+
     Solvation solvation;
     solvation.x = std::vector<double>(graph.ownVertices); // начальное решение
 
@@ -106,9 +109,18 @@ Solvation ConjugateGradientSolver::Solve(const Graph &graph, const Communication
     while (!isConverge);
 
     solvation.res = GetResidualNorm(graph, communication, solvation.x, debug_r);
+    TimePoint t1 = Time::now();
+    double time = std::chrono::duration_cast<ms>(t1 - t0).count(); // вычисляем разницу времени
+
+    double solveTime = 0;
+    MPI_Allreduce(&time, &solveTime, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+
+    if (graph.id == 0) {
+        std::cout << "Solve time: " << solveTime << " ms" << std::endl;
+    }
 
     if (debug == FULL_DEBUG) {
-        PrintDebug(solvation, norms, rho, graph.id);
+        PrintDebug(solvation, norms, rho, graph.id, time);
     }
 
     return solvation;

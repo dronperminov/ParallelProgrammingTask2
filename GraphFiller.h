@@ -21,7 +21,7 @@ inline double Fb(int i) {
 class GraphFiller {
     bool debug; // нужна ли отладка
 
-    void PrintDebug(const Graph& graph) const; // вывод отладочных значений
+    void PrintDebug(const Graph& graph, double time) const; // вывод отладочных значений
 public:
     GraphFiller(bool debug);
 

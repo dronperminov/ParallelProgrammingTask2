@@ -43,7 +43,7 @@ class GraphGenerator {
 
     void PrintEdges(std::ofstream &fout, const std::vector<LinkInfo> &edges, int ownVertices) const; // вывод рёбер
     void PrintArray(std::ofstream &fout, const std::vector<int> array, const char *message) const; // вывод массива
-    void PrintDebug(const Graph& graph, const std::vector<LinkInfo> &edges, int id, int i_start, int i_end, int j_start, int j_end) const; // вывод отладки
+    void PrintDebug(const Graph& graph, const std::vector<LinkInfo> &edges, int id, int i_start, int i_end, int j_start, int j_end, double time) const; // вывод отладки
 public:
     GraphGenerator(TaskParams params);
 

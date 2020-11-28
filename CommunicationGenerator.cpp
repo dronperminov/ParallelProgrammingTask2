@@ -26,8 +26,10 @@ void CommunicationGenerator::PrintVector(std::ofstream &fout, const std::vector<
 }
 
 // вывод отладочной информации
-void CommunicationGenerator::PrintDebug(const Graph &graph, const Communication &communication, std::vector<std::vector<int>> sendToProcess, std::vector<std::vector<int>> recvFromProcess) const {
+void CommunicationGenerator::PrintDebug(const Graph &graph, const Communication &communication, std::vector<std::vector<int>> sendToProcess, std::vector<std::vector<int>> recvFromProcess, double time) const {
     std::ofstream fout("log/" + std::to_string(graph.id) + ".txt", std::ios::app);
+
+    fout << "Communication generation time: " << time << "ms" << std::endl;
 
     for (int p = 0; p < processCount; p++) {
         if (!sendToProcess[p].size())
@@ -55,6 +57,8 @@ void CommunicationGenerator::PrintDebug(const Graph &graph, const Communication 
 
 // построение схемы обменов
 Communication CommunicationGenerator::Build(const Graph &graph) {
+    TimePoint t0 = Time::now();
+
     std::vector<std::vector<int>> sendToProcess(processCount);
     std::vector<std::vector<int>> recvFromProcess(processCount);
 
@@ -88,8 +92,18 @@ Communication CommunicationGenerator::Build(const Graph &graph) {
         communication.recvOffset.push_back(communication.recv.size());
     }
 
+    TimePoint t1 = Time::now();
+    double time = std::chrono::duration_cast<ms>(t1 - t0).count(); // вычисляем разницу времени
+
+    double communicationTime = 0;
+    MPI_Allreduce(&time, &communicationTime, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+
+    if (graph.id == 0) {
+        std::cout << "Communication generation time: " << communicationTime << " ms" << std::endl;
+    }
+
     if (debug) {
-        PrintDebug(graph, communication, sendToProcess, recvFromProcess);
+        PrintDebug(graph, communication, sendToProcess, recvFromProcess, time);
     }
 
     return communication;
