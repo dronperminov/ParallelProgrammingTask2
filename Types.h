@@ -3,6 +3,7 @@
 #include <chrono>
 #include <vector>
 #include <string>
+#include <mpi.h>
 
 const int FULL_DEBUG = 2;
 const int SOLVE_DEBUG = 1;
