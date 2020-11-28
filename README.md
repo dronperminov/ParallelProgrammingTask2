@@ -72,16 +72,16 @@
 Для того, чтобы результат работы генератора был более наглядным, имеется html визуализатор. Визуализатор позволяет задавать входные аргументы и отображает сетку и полученные рёбра на ней.
 Визуализатор доступен по адресу: <a href="https://programforyou.ru/tests/parallel-visualizer-2">programforyou.ru/tests/parallel-visualizer-2</a>
 
-<img src='https://github.com/dronperminov/ParallelProgrammingTask2/blob/master/examples/visualizer.png' />
+<img src='https://github.com/dronperminov/ParallelProgrammingTask2/blob/main/examples/visualizer.png' />
 
 ## Примеры сеток (результат работы визуализатора)
 
 <table>
   <tr>
-    <td><img src='https://github.com/dronperminov/ParallelProgrammingTask2/blob/master/examples/example1.png' /></td>
+    <td><img src='https://github.com/dronperminov/ParallelProgrammingTask2/blob/main/examples/example1.png' /></td>
   </tr>
 
   <tr>
-    <td><img src='https://github.com/dronperminov/ParallelProgrammingTask2/blob/master/examples/example2.png' /></td>
+    <td><img src='https://github.com/dronperminov/ParallelProgrammingTask2/blob/main/examples/example2.png' /></td>
   </tr>
 </table>
