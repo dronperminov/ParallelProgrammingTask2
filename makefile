@@ -1,11 +1,8 @@
-COMPILER=mpicxx
+COMPILER=mpixlC
 FLAGS=-O3 -pedantic -Wall -std=c++11
-FILES=ArgumentParser.cpp GraphGenerator.cpp GraphFiller.cpp CommunicationGenerator.cpp
+FILES=ArgumentParser.cpp GraphGenerator.cpp GraphFiller.cpp CommunicationGenerator.cpp VectorMath.cpp ConjugateGradientSolver.cpp
 
-all: main execute
+all: main
 
 main:
 	$(COMPILER) $(FLAGS) $(FILES) main.cpp -o main
-
-execute:
-	rm output.txt -f && mpisubmit.pl -p 4 --stdout=output.txt --stderr=/dev/null ./main 4 4 3 4 2 2 1e-5 f
